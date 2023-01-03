@@ -1,7 +1,12 @@
-import pandas as pd
-from bs4 import BeautifulSoup
-import requests 
 from typing import Dict
+from configparser import ConfigParser
+import argparse
+import requests 
+
+from bs4 import BeautifulSoup
+import pandas as pd
+from requestLimiter import RequestLimiter
+from config import Config
 
 # Season
 # season  /  team_name  /  stadium_name
@@ -89,22 +94,47 @@ def load_month(month):
     print(df)
     
 
-
-
 if __name__ == '__main__':
-    BASE = 'https://www.basketball-reference.com'
-    bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
-                    'schedule_base' : BASE + 'leagues/NBA_%s_games-%s.html'}
+    # ======
+    # 1. Read configs
+    # ======
+    config : Config = Config('config.ini')
+    # reader 
+    read_constants : Dict[str, str] = config.parse_section('reader')
+    BASE : str = read_constants['base']
+    NAME : str = BASE[BASE.find('.') + 1:]
+    LOAD_FILE : str = f'data/{NAME}.p'
+
+    # requestLimiter
+    rl_constants : Dict[str, str] = config.parse_section('requestLimiter')
+    INTERVAL : int = rl_constants['interval']
+    LIMIT : int = rl_constants['limit']
     
-    year = 2022
-    MONTHS = [i.lower() for i in ['October',
-                'November',
-                'December', 
-                'January', 
-                'February', 
-                'March', 
-                'April', 
-                'May', 
-                'June']]
+    # ======
+    # 2. Parse args
+    # ======
+    parser = argparse.ArgumentParser()
+    parser.add_argument("year", help = "Year of data to be added ")
+    args = parser.parse_args()
+    YEAR : int = int(args.year)
     
-    main(year, bases)
+    
+    rl : RequestLimiter = RequestLimiter(BASE, 
+                        interval = INTERVAL, 
+                        limit = LIMIT, 
+                        load = LOAD_FILE)
+    # bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
+    #                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
+    
+    # year = 2022
+    # MONTHS = [i.lower() for i in ['October',
+    #             'November',
+    #             'December', 
+    #             'January', 
+    #             'February', 
+    #             'March', 
+    #             'April', 
+    #             'May', 
+    #             'June']]
+    
+    # # main(year, bases)

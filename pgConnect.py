@@ -1,60 +1,46 @@
 import psycopg2
+from psycopg2.extensions import connection
 from configparser import ConfigParser
-from typing import Dict
+from typing import Dict, Callable
+from config import Config
 
 
 class PgConnection():
-    def __init__(self):
-        self.conn : psycopg2.connection = self.connect()
+    def __init__(self, config):
+        self.config = config
+        self.conn : connection = self.connect()
         if self.conn:
             self.cursor : psycopg2.cursor = self.conn.cursor
-    
-    def connect(self):
+            
+    def connect(self) -> connection:
         """ Connect to the PostgreSQL database server """
-        self.conn = None
+        conn = None
         try:
             # read connection parameters
-            params : Dict[str, str] = self._config()
+            params : Dict[str, str] = self.config.parse_section('postgresql')
 
             # connect to the PostgreSQL server
             print('Connecting to the PostgreSQL database...')
-            self.conn : psycopg2.connection = psycopg2.connect(**params)
-            return self.conn
+            conn : psycopg2.connection = psycopg2.connect(**params)
+            return conn
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
         return conn
 
-    def _config(self, filename : str ='database.ini', section : str ='postgresql') -> Dict[str, str]:
-        # create a parser
-        parser = ConfigParser()
-        # read config file
-        parser.read(filename)
-
-        # get section, default to postgresql
-        db = {}
-        if parser.has_section(section):
-            params = parser.items(section)
-            for param in params:
-                db[param[0]] = param[1]
-        else:
-            raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-
-        return db
-    
-
-    def getConn(self):
+    def getConn(self) -> connection:
         return self.conn
     
 
-    def getCurs(self):
+    def getCurs(self) -> Callable: # cursor is builtin_function
         return self.cursor
 
 
     def close(self) -> None:
-        print("Closing PostgreSQL database...")
-        self.conn.close()
+        if self.conn:
+            print("Closing PostgreSQL database...")
+            self.conn.close()
 
 if __name__ == '__main__':
-    conn = PgConnection()
+    config = Config('config.ini')
+    conn = PgConnection(config)
     conn.close()
-
