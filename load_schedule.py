@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from configparser import ConfigParser
 import argparse
 import requests 
@@ -29,26 +29,26 @@ from config import Config
 # Teams
 # id / teamName /  
 
-def main(year : int, bases : Dict[str, str]):
-    teams : Dict[str, Dict] = learn_teams(bases['summary_base'])
-    for k in teams.keys():
-        arena, roster = get_team_info(k, teams)
-        teams[k]['arena'] = arena
-        teams[k]['roster'] = roster
+def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter):
+    team_links : Dict[str, str] = learn_teams(bases['summary_base'])
+    teams : Dict[str, dict]
+    for team, link in team_links.items():
+        get_team_info(team, link, rl)
+    #     teams[k]['arena'] = arena
+    #     teams[k]['roster'] = roster
     
 
-def get_team_info(team_key : str, teams : Dict[str, str]):
-    team = teams[team_key]
-    tm_link = BASE = team['link']
+def get_team_info(team : str, link : str, rl : RequestLimiter):
+    tm_link = BASE + link
+    print(rl.get(requests.get, tm_link).ok)
+    # data = requests.get(tm_link).text
+    # soup = BeautifulSoup(data, 'html.parser')
+    # arena = get_arena(soup)
+    # roster = read_ith_table(soup, 0, id = 'roster')
+    # return arena, roster
 
-    data = requests.get(tm_link).text
-    soup = BeautifulSoup(data, 'html.parser')
-    arena = get_arena(soup)
-    roster = read_ith_table(soup, 0, id = 'roster')
-    return arena, roster
 
-
-def learn_teams(link : str) -> Dict[str, Dict]:
+def learn_teams(link : str) -> Dict[str, str]:
     tm_dict = {}
     data = requests.get(link).text
     soup = BeautifulSoup(data, 'html.parser')
@@ -58,7 +58,7 @@ def learn_teams(link : str) -> Dict[str, Dict]:
         rows = table.findChildren(['tr'])
         for row in rows:
             for a in row.find_all('a'):
-                tm_dict[a.text] = {'link' : a.get('href')}
+                tm_dict[a.text] = a.get('href')
     else:
         print("Previously hit rate limit on website!")
     return tm_dict
@@ -104,7 +104,15 @@ if __name__ == '__main__':
     BASE : str = read_constants['base']
     NAME : str = BASE[BASE.find('.') + 1:]
     LOAD_FILE : str = f'data/{NAME}.p'
-
+    MONTHS : List[int] = [i.lower() for i in ['October',
+                'November',
+                'December', 
+                'January', 
+                'February', 
+                'March', 
+                'April', 
+                'May', 
+                'June']]
     # requestLimiter
     rl_constants : Dict[str, str] = config.parse_section('requestLimiter')
     INTERVAL : int = rl_constants['interval']
@@ -123,18 +131,7 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT, 
                         load = LOAD_FILE)
-    # bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
-    #                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
+    bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
+                'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
     
-    # year = 2022
-    # MONTHS = [i.lower() for i in ['October',
-    #             'November',
-    #             'December', 
-    #             'January', 
-    #             'February', 
-    #             'March', 
-    #             'April', 
-    #             'May', 
-    #             'June']]
-    
-    # # main(year, bases)
+    load_teams(year = YEAR, bases = bases, rl = rl)
