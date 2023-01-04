@@ -1,10 +1,10 @@
-from psycopg2.extensions import connection
+import argparse
 from pgConnect import PgConnection
 from config import Config
 from typing import Dict
 
 
-def create_tables(pgc : PgConnection):
+def create_player_tables(pgc : PgConnection):
     conn = pgc.getConn()
     cur  = pgc.getCurs()
     commands = (
@@ -48,9 +48,17 @@ def create_tables(pgc : PgConnection):
     return
 
 
-
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("type", help = "Type can be 'player' or 'box'")
+    args = parser.parse_args()
+    create_type : str = args.type
+    
     conf = Config()
     pgc = PgConnection(conf)
-    create_tables(pgc)
+
+    fx_dict = {'player' : create_player_tables,
+                'box' : 'create_box_tables'}
     
+    fx = fx_dict[create_type]
+    fx(pgc)
