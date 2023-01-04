@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from requestLimiter import RequestLimiter
+from limitedScraper import LimitedScraper
 from config import Config
 
 # Season
@@ -31,9 +32,13 @@ from config import Config
 
 def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter):
     team_links : Dict[str, str] = learn_teams(bases['summary_base'])
-    teams : Dict[str, dict]
-    for team, link in team_links.items():
-        get_team_info(team, link, rl)
+    ls : LimitedScraper = LimitedScraper(name = 'team_info',
+                                            linkDict = team_links,
+                                            load = LOAD_FILE)
+    
+    # teams : Dict[str, dict]
+    # for team, link in team_links.items():
+    #     get_team_info(team, link, rl)
     #     teams[k]['arena'] = arena
     #     teams[k]['roster'] = roster
     
@@ -125,7 +130,6 @@ if __name__ == '__main__':
     parser.add_argument("year", help = "Year of data to be added ")
     args = parser.parse_args()
     YEAR : int = int(args.year)
-    
     
     rl : RequestLimiter = RequestLimiter(BASE, 
                         interval = INTERVAL, 

@@ -7,9 +7,9 @@ import pickle
 
 class RequestLimiter():
     """
-    Save decorator
+    Static save decorator
     """
-    def _save(self, name = None, path = './data/') -> None:
+    def _save(self, name = None, path = './data/rl/') -> None:
         if not name:
             name = self.base[self.base.find('.') + 1:]
         print("Saving RequestLimiter status to disk...")
@@ -23,14 +23,16 @@ class RequestLimiter():
             return result
         return wrapper
 
+    """ Constructor """
     @save
     def __init__(self, base_link : str = None, 
                     interval : int = None, # in seconds
                     limit : int = None, 
                     load : str = None):
         if not (load and self._load(load)):
+            print("Instantiating from constructor...")
             self.base : str = base_link
-            self.interval = interval
+            self.interval : int = interval
             self.limit : int = limit
             self.accesses : List[float] = deque() # In last 60 seconds
         self._popAccesses()
@@ -116,31 +118,3 @@ if __name__ == '__main__':
         print(a)
         print()
     a.save()
-
-    # for i in range(4):
-    #     time.sleep(1)
-    #     a.get(requests.get, bases['summary_base'])
-    #     print(a)
-    # a.save()
-
-    # a = RequestLimiter(base_link = 'https://www.espn.com', 
-    #                     limit = 10,  
-    #                     interval = 15)
-    # # a.get(requests.get, 'https://nfl.com')
-    # print(a)
-    
-    # for i in range(9):
-    #     time.sleep(1)
-    #     a.get(requests.get, 'https://www.espn.com')
-    #     print(a)
-    # a.save()
-
-    # time.sleep(7)
-    # print("")
-    # print("moving to a new object...")
-    # b = RequestLimiter(load= 'data/espn.com.p')
-    # for i in range(10):
-    #     time.sleep(0.25)
-    #     b.get(requests.get, 'https://www.espn.com')
-    #     print(b)
-
