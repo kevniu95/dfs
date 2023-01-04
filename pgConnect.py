@@ -8,11 +8,11 @@ from config import Config
 class PgConnection():
     def __init__(self, config):
         self.config = config
-        self.conn : connection = self.connect()
+        self.conn : connection = self._connect()
         if self.conn:
-            self.cursor : psycopg2.cursor = self.conn.cursor
+            self.cursor : psycopg2.cursor = self.conn.cursor()
             
-    def connect(self) -> connection:
+    def _connect(self) -> connection:
         """ Connect to the PostgreSQL database server """
         conn = None
         try:

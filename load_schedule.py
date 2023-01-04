@@ -29,33 +29,45 @@ from config import Config
 
 # Teams
 # id / teamName /  
+def test():
+    pass
 
 def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter):
-    team_links : Dict[str, str] = learn_teams(bases['summary_base'])
-    ls : LimitedScraper = LimitedScraper(name = 'team_info',
-                                            linkDict = team_links,
-                                            load = LOAD_FILE)
-    
+    team_links : Dict[str, str] = learn_teams(bases['summary_base'], rl)
+    tl = dict((k, team_links[k]) for k in ['Boston Celtics'])
+    print(tl)
+    dat = get_team_info('Boston Celtics', tl['Boston Celtics'], rl)
+    print(dat)
+    # fx = test    
+    # ls : LimitedScraper = LimitedScraper(fx = fx,
+    #                                         name = 'team_info',
+    #                                         linkDict = team_links,
+    #                                         rl = rl)
     # teams : Dict[str, dict]
     # for team, link in team_links.items():
     #     get_team_info(team, link, rl)
     #     teams[k]['arena'] = arena
     #     teams[k]['roster'] = roster
-    
+
 
 def get_team_info(team : str, link : str, rl : RequestLimiter):
-    tm_link = BASE + link
-    print(rl.get(requests.get, tm_link).ok)
-    # data = requests.get(tm_link).text
-    # soup = BeautifulSoup(data, 'html.parser')
-    # arena = get_arena(soup)
-    # roster = read_ith_table(soup, 0, id = 'roster')
-    # return arena, roster
+    data =rl.get(requests.get, link)
+    if not data:
+        print(f"Unable to retrieve team info for {team}!")
+        return
+    soup = BeautifulSoup(data.text, 'html.parser')
+    arena = get_arena(soup)
+    roster = read_ith_table(soup, 0, id = 'roster')
+    return arena, roster
 
 
-def learn_teams(link : str) -> Dict[str, str]:
+def learn_teams(link : str, rl : RequestLimiter) -> Dict[str, str]:
     tm_dict = {}
-    data = requests.get(link).text
+    data = rl.get(requests.get, link)
+    if not data:
+        print("Couldn't get information in learn_teams() function!")
+        return 
+    data = data.text
     soup = BeautifulSoup(data, 'html.parser')
     
     table = get_ith_table(soup, 4, class_ = 'stats_table')
@@ -63,7 +75,7 @@ def learn_teams(link : str) -> Dict[str, str]:
         rows = table.findChildren(['tr'])
         for row in rows:
             for a in row.find_all('a'):
-                tm_dict[a.text] = a.get('href')
+                tm_dict[a.text] = BASE + a.get('href')
     else:
         print("Previously hit rate limit on website!")
     return tm_dict
@@ -103,25 +115,18 @@ if __name__ == '__main__':
     # ======
     # 1. Read configs
     # ======
-    config : Config = Config('config.ini')
+    config : Config = Config()
     # reader 
     read_constants : Dict[str, str] = config.parse_section('reader')
     BASE : str = read_constants['base']
     NAME : str = BASE[BASE.find('.') + 1:]
-    LOAD_FILE : str = f'data/{NAME}.p'
-    MONTHS : List[int] = [i.lower() for i in ['October',
-                'November',
-                'December', 
-                'January', 
-                'February', 
-                'March', 
-                'April', 
-                'May', 
-                'June']]
+
     # requestLimiter
     rl_constants : Dict[str, str] = config.parse_section('requestLimiter')
-    INTERVAL : int = rl_constants['interval']
-    LIMIT : int = rl_constants['limit']
+    load_loc = rl_constants['load_location']
+    LOAD_FILE : str = f'{load_loc}{NAME}.p'
+    INTERVAL : int = int(rl_constants['interval'])
+    LIMIT : int = int(rl_constants['limit'])
     
     # ======
     # 2. Parse args
@@ -135,7 +140,16 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT, 
                         load = LOAD_FILE)
-    bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
+    bases = {'summary_base' :BASE + f'/leagues/NBA_{YEAR}.html',
                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
-    
     load_teams(year = YEAR, bases = bases, rl = rl)
+
+    # MONTHS : List[int] = [i.lower() for i in ['October',
+    #         'November',
+    #         'December', 
+    #         'January', 
+    #         'February', 
+    #         'March', 
+    #         'April', 
+    #         'May', 
+    #         'June']]

@@ -1,28 +1,29 @@
 from requestLimiter import RequestLimiter
-from typing import Dict, Any
+from typing import Dict, Any, Callable
 import pickle
 import time
 import requests
 
-class LimitedScraper(RequestLimiter):
-    def __init__(self, name : str, linkDict : Dict[str, str], **kwargs):
-        print(kwargs)
-        super().__init__(**kwargs)
+class LimitedScraper():
+    def __init__(self, fx : Callable, name: str, linkDict: Dict[str, str], rl : RequestLimiter):
+        self.fx = fx
         self.name = name
-        self.stateDict = self._instStateDict(linkDict)
-        
+        self.state_dict = linkDict
+        # self.stateDict = self._instStateDict(linkDict)
+        self.rl = rl
 
-    def _instStateDict(self, linkDict):
-        new_dict = {}
-        for k, v in linkDict.items():
-            new_dict[k] = {'link' : v, 'done' : False}
-        return new_dict
-        
     def _save(self, path = './data/ls/'):
-        super()._save()
-        print("Saving LimitedScraper status to disk...")
+        self.rl._save()
         with open(path + self.name + '.p', 'wb') as handle:
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    def save(func):
+        def wrapper(self, *args, **kwargs):
+            result = func(self, *args, **kwargs)
+            self._save()
+            return result
+        return wrapper
+
 
 
 

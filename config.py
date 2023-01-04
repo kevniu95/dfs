@@ -2,7 +2,7 @@ from configparser import ConfigParser
 from typing import Dict
 
 class Config():
-    def __init__(self, filename : str):
+    def __init__(self, filename : str = 'config.ini'):
         self.filename : str = filename
         # create a parser
         self.parser = self._setupParser()
