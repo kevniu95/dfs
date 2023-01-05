@@ -58,6 +58,7 @@ def get_team_info(team : str, link : str, rl : RequestLimiter):
     soup = BeautifulSoup(data.text, 'html.parser')
     arena = get_arena(soup)
     roster = read_ith_table(soup, 0, id = 'roster')
+    roster_table = get_ith_table(soup, 0, id = 'roster')
     return arena, roster
 
 
@@ -103,8 +104,6 @@ def read_ith_table(soup, i, **kwargs):
     if table:
         return pd.read_html(str(table), flavor='html5lib')[0]    
 
-
-    
 def load_month(month):
     link = base % (2022, month)
     df = read_ith_table(link)

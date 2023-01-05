@@ -20,19 +20,21 @@ def create_player_tables(pgc : PgConnection):
                 CREATE TABLE players(
                     player_id SERIAL PRIMARY KEY,
                     player_name VARCHAR(255),
+                    draft INTEGER,
+                    debut_season INTEGER,
                     height INTEGER,
                     weight INTEGER,
                     birthday DATE,
                     country VARCHAR(10),
-                    start_year INTEGER,
-                    college VARCHAR(10)
+                    college VARCHAR(10),
+                    shoots VARCHAR(1)
                 )
                 """,
                 """
                 CREATE TABLE rosters(
                     season INTEGER,
                     team VARCHAR(255),
-                    number INTEGER,
+                    jersey_number INTEGER,
                     player_id integer REFERENCES players,
                     position VARCHAR(10)
                 )
