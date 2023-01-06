@@ -9,34 +9,46 @@ def create_player_tables(pgc : PgConnection):
     cur  = pgc.getCurs()
     commands = (
                 """
-                CREATE TABLE teams (
-                    season INTEGER,
-                    team VARCHAR(255),
+                CREATE TABLE team (
+                    season INTEGER NOT NULL,
+                    team VARCHAR(255) NOT NULL,
                     stadium VARCHAR(255),
-                    PRIMARY KEY (season, team)
+                    PRIMARY KEY (season, team),
+                    UNIQUE (season, team)
                 )
                 """,
                 """
-                CREATE TABLE players(
-                    player_id SERIAL PRIMARY KEY,
-                    player_name VARCHAR(255),
+                CREATE TABLE player(
+                    player_name VARCHAR(255) NOT NULL,
+                    dob DATE NOT NULL,
+                    height INTEGER NOT NULL,
+                    weight INTEGER NOT NULL,
                     draft INTEGER,
                     debut_season INTEGER,
-                    height INTEGER,
-                    weight INTEGER,
-                    birthday DATE,
                     country VARCHAR(10),
-                    college VARCHAR(10),
-                    shoots VARCHAR(1)
+                    college VARCHAR(255),
+                    link VARCHAR(255),
+                    PRIMARY KEY(player_name, dob, height, weight),
+                    UNIQUE(player_name, dob, height, weight)
                 )
                 """,
                 """
-                CREATE TABLE rosters(
+                CREATE TABLE roster(
                     season INTEGER,
                     team VARCHAR(255),
+                    player_name VARCHAR(255) NOT NULL,
+                    dob DATE NOT NULL,
+                    height INTEGER NOT NULL,
+                    weight INTEGER NOT NULL,
                     jersey_number INTEGER,
-                    player_id integer REFERENCES players,
-                    position VARCHAR(10)
+                    position VARCHAR(10),
+                    
+                    PRIMARY KEY(season, team, player_name, dob, height, weight),
+                    UNIQUE(season, team, player_name, dob, height, weight),
+                    FOREIGN KEY(player_name, dob, height, weight) 
+                        REFERENCES player(player_name, dob, height, weight),
+                    FOREIGN KEY(season, team)
+                        REFERENCES team(season, team)
                 )
                 """
     )

@@ -42,5 +42,9 @@ class PgConnection():
 
 if __name__ == '__main__':
     config = Config('config.ini')
-    conn = PgConnection(config)
+    pgc = PgConnection(config)
+    conn = pgc.getConn()
+    cur = pgc.getCurs()
+
+    # conn = PgConnection(config)
     conn.close()
