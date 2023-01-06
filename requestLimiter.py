@@ -96,10 +96,12 @@ class RequestLimiter():
 
     # Print dunder methods
     def __str__(self):
-        return f"Website: {self.base} / Limit: {self.limit } / Visits in last {self.interval}: {self.length}"
+        return f"Website: {self.base} / Limit: {self.limit } / "\
+                "Visits in last {self.interval}: {self.length}"
     
     def __repr__(self):
-        return f"Website: {self.base} / Limit: {self.limit } / Visits in last {self.interval}: {self.length}"
+        return f"Website: {self.base} / Limit: {self.limit } / "\
+                "Visits in last {self.interval}: {self.length}"
 
 
 if __name__ == '__main__':

@@ -25,8 +25,6 @@ class LimitedScraper():
         return wrapper
 
 
-
-
 if __name__ == '__main__':
     # BASE = 'https://www.basketball-reference.com'
     BASE = 'https://www.espn.com'
