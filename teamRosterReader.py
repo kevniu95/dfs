@@ -13,6 +13,10 @@ config : Config = Config()
 read_constants : Dict[str, str] = config.parse_section('reader')
 BASE : str = read_constants['base']
 
+
+"""
+A. Separate, independent function
+"""
 def learn_teams_from_summary(link : str, rl : RequestLimiter) -> Dict[str, str]:
     tm_dict = {}
     data = rl.get(requests.get, link)
@@ -32,6 +36,7 @@ def learn_teams_from_summary(link : str, rl : RequestLimiter) -> Dict[str, str]:
         print("Previously hit rate limit on website!")
     return tm_dict
 
+
 class TeamRosterReader():
     """
     Functions to read from a single Team page
@@ -43,6 +48,20 @@ class TeamRosterReader():
         self.year : int = year
         self.rl : RequestLimiter = rl
 
+    """
+    Getters and setters
+    """
+    def set_team(self, tm : str) -> None:
+        self.tm = tm
+
+
+    def set_link(self, link : str) -> None:
+        self.link = link
+
+
+    """
+    B. Get team info
+    """
     def get_team_info(self) -> Tuple[str, bs4.element.Tag]:
         data = self.rl.get(requests.get, self.link)
         if not data:
@@ -60,7 +79,9 @@ class TeamRosterReader():
         arena = p.contents[2].strip()
         return arena
 
-
+    """
+    C. Get player info
+    """
     def process_player_table(self, table : bs4.element.Tag) -> pd.DataFrame:
         """
         Takes HTML table and adds links before creating pd.DataFrame
@@ -112,7 +133,7 @@ class TeamRosterReader():
 
     def process_rows_for_roster(self, df, tm):
         rows = []
-        for num, row in df.iterrows():
+        for _, row in df.iterrows():
             out = (self.year,
                     tm,
                     self._process_name(row['Player']),

@@ -15,6 +15,7 @@ from pgConnect import PgConnection
 from requestLimiter import RequestLimiter
 from limitedScraper import LimitedScraper
 from config import Config
+from teamRosterReader import TeamRosterReader, learn_teams_from_summary
 from bs4utils import read_ith_table, get_ith_table
 
 # Season
@@ -82,22 +83,25 @@ Load teams function
 '''
 def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter):
     team_links : Dict[str, str] = learn_teams_from_summary(bases['summary_base'], rl)
-    tl = dict((k, team_links[k]) for k in ['Boston Celtics','Miami Heat','Detroit Pistons'])
+    tl = dict((k, team_links[k]) for k in ['Boston Celtics'])
+    trr = TeamRosterReader(None, None, year, rl)
     for tm, link in tl.items():
-        stadium, player_table = get_team_info(tm, link, rl)
+        trr.set_team(tm)
+        trr.set_link(link)
+        stadium, player_table = trr.get_team_info()
 
         team_tup = [(YEAR, tm, stadium)]
         team_to_db(team_tup)
 
-        df = process_player_table(player_table)
-        player_tups = process_rows_for_player(df)
+        df = trr.process_player_table(player_table)
+        print(df)
+        player_tups = trr.process_rows_for_player(df)
         players_to_db(player_tups)
         
-        roster_tups = process_rows_for_roster(df, tm)
+        roster_tups = trr.process_rows_for_roster(df, tm)
         roster_to_db(roster_tups)
 
     return
-
 
 
 if __name__ == '__main__':
@@ -129,6 +133,7 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT, 
                         load = LOAD_FILE)
+    
     bases = {'summary_base' :BASE + f'/leagues/NBA_{YEAR}.html',
                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
 
