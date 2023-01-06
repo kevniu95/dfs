@@ -4,6 +4,16 @@ from config import Config
 from typing import Dict
 
 
+# Season
+# season  /  team_name  /  stadium_name
+
+# Rosters 
+# season / team_name / player_id / player_name / Pos / Exp
+
+# Players
+# player_id / player_name / birth_date / country / start_yr / college
+
+
 def create_player_tables(pgc : PgConnection):
     conn = pgc.getConn()
     cur  = pgc.getCurs()

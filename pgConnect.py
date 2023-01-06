@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2.extensions import connection
+from psycopg2.extensions import connection, cursor
 from configparser import ConfigParser
 from typing import Dict, Callable
 from config import Config
@@ -10,7 +10,7 @@ class PgConnection():
         self.config = config
         self.conn : connection = self._connect()
         if self.conn:
-            self.cursor : psycopg2.cursor = self.conn.cursor()
+            self.cursor : cursor = self.conn.cursor()
             
     def _connect(self) -> connection:
         """ Connect to the PostgreSQL database server """
@@ -31,7 +31,7 @@ class PgConnection():
         return self.conn
     
 
-    def getCurs(self) -> Callable: # cursor is builtin_function
+    def getCurs(self) -> cursor: # cursor is builtin_function
         return self.cursor
 
 

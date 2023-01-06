@@ -16,16 +16,8 @@ from requestLimiter import RequestLimiter
 from limitedScraper import LimitedScraper
 from config import Config
 from teamRosterReader import TeamRosterReader, learn_teams_from_summary
+from dfs_dao import Dfs_dao
 from bs4utils import read_ith_table, get_ith_table
-
-# Season
-# season  /  team_name  /  stadium_name
-
-# Rosters 
-# season / team_name / player_id / player_name / Pos / Exp
-
-# Players
-# player_id / player_name / birth_date / country / start_yr / college
 
 # Schedule / Box_score
 # game_id / season  /  tm1  /  tm2  /  stadium  /  statistics
@@ -36,70 +28,30 @@ from bs4utils import read_ith_table, get_ith_table
 # game_id  / player2 / opp  / statistics...
 
 
-# Teams
-# id / teamName /  
-
-
 """
 1. Things to DB
 """
-def players_to_db(tups):
-    args = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s)", i).decode('utf-8') for i in tups)
-    qry = "INSERT INTO player VALUES " + (args) + " ON CONFLICT (player_name, dob, height, weight) DO NOTHING"
-    # print(qry)
-    try:
-        cur.execute(qry)
-        conn.commit()
-        print("Commited player insertion!")
-    except Exception as e:
-        print("Couldn't execute and commit player insertion!")
-        print(str(e))
-
-def roster_to_db(tups):
-    args = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s)", i).decode('utf-8') for i in tups)
-    qry = "INSERT INTO roster VALUES " + (args) + " ON CONFLICT (season, team, player_name, dob, height, weight) DO NOTHING"
-    try:
-        cur.execute(qry)
-        conn.commit()
-        print("Commited roster insertion!")
-    except Exception as e:
-        print("Couldn't execute and commit roster insertion!")
-        print(str(e))
-
-def team_to_db(team_tup):
-    args = ','.join(cur.mogrify("(%s,%s,%s)", i).decode('utf-8') for i in team_tup)
-    qry = "INSERT INTO team VALUES " + (args) + " ON CONFLICT (season, team) DO NOTHING"
-    try:
-        cur.execute(qry)
-        conn.commit()
-        print("Commited team insertion!")
-    except Exception as e:
-        print("Couldn't execute and commit team insertion!")
-        print(str(e))
-
 
 '''
 Load teams function
 '''
-def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter):
+def load_teams(year : int, bases : Dict[str, str], rl : RequestLimiter, trr : TeamRosterReader, dao : Dfs_dao):
     team_links : Dict[str, str] = learn_teams_from_summary(bases['summary_base'], rl)
-    tl = dict((k, team_links[k]) for k in ['Boston Celtics'])
-    trr = TeamRosterReader(None, None, year, rl)
+    tl = dict((k, team_links[k]) for k in ['Boston Celtics', 'Dallas Mavericks', 'Phoenix Suns'])
     for tm, link in tl.items():
         trr.set_team(tm)
         trr.set_link(link)
         stadium, player_table = trr.get_team_info()
 
         team_tup = [(YEAR, tm, stadium)]
-        team_to_db(team_tup)
+        dao.team_to_db(team_tup)
 
         df = trr.process_player_table(player_table)
-        print(df)
         player_tups = trr.process_rows_for_player(df)
-        players_to_db(player_tups)
+        dao.players_to_db(player_tups)
         
         roster_tups = trr.process_rows_for_roster(df, tm)
-        roster_to_db(roster_tups)
+        dao.roster_to_db(roster_tups)
 
     return
 
@@ -109,6 +61,8 @@ if __name__ == '__main__':
     # 1. Read configs
     # ======
     config : Config = Config()
+    pgc : PgConnection = PgConnection(config)
+    
     # reader 
     read_constants : Dict[str, str] = config.parse_section('reader')
     BASE : str = read_constants['base']
@@ -134,13 +88,13 @@ if __name__ == '__main__':
                         limit = LIMIT, 
                         load = LOAD_FILE)
     
+    trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
+    dao : Dfs_dao = Dfs_dao(pgc)
+
     bases = {'summary_base' :BASE + f'/leagues/NBA_{YEAR}.html',
                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
 
-    pgc = PgConnection(config)
-    conn = pgc.getConn()
-    cur = pgc.getCurs()
-    load_teams(year = YEAR, bases = bases, rl = rl)
+    load_teams(year = YEAR, bases = bases, rl = rl, trr = trr, dao = dao)
 
     # MONTHS : List[int] = [i.lower() for i in ['October',
     #         'November',
