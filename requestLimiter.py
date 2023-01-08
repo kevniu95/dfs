@@ -1,9 +1,11 @@
 import time
+import csv
 from typing import Callable, List
 from collections import deque
 import requests
 from requests.models import Response
 import pickle
+import threading
 
 # class BatchRequestLimiter(RequestLimiter):
 #     """
@@ -12,6 +14,44 @@ import pickle
 #     def __init__(self):
 
 
+class LogEntry():
+    def __init__(self, web_link : str, web_base : str):
+        self.web_link = web_link
+        self.web_base = web_base
+        self.send_time = None
+        self.rcv_time = None
+        self.rcv_status = None
+        self.load = self._init_load()
+    
+    def _init_load(self, path : str = './data/rl/log/') -> str:
+        name = self.web_base[self.web_base.find('.') + 1:]
+        file = path + name + '.csv'
+        return file
+        
+    def writeEntry(self):
+        x = threading.Thread(self._writeEntry)
+        x.start()
+    
+    def _writeEntry(self):
+        writeMe = [self.web_link, self.base, self.send_time, self.rcv_time, self.rcv_status]
+        with open(self.load, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(writeMe)
+        
+    def within_interval(self, interval : int) -> bool:
+        if (time.time() - self.rcv_time) <= interval:
+            return True
+        return False
+
+    def set_send_time(self, send_time : float) -> None:
+        self.send_time = send_time
+    
+    def set_rcv_time(self, rcv_time : float) -> None:
+        self.rcv_time = rcv_time
+    
+    def set_rcv_status(self, rcv_status : Response) -> None:
+        self.rcv_status = rcv_status
+    
 
 class RequestLimiter():
     """
@@ -83,7 +123,7 @@ class RequestLimiter():
                     " front of queue to pop.")
             self._wait_for_pop_time()
         res = request(link)
-        self._appendAccess()
+        self._appendAccess(link)
         print(f"Size of current queue... {self.length}")
         return res
     
@@ -141,9 +181,13 @@ class RequestLimiter():
         while (self.length > 0) and (time.time() - self.accesses[0] > self.interval):
             a = self.accesses.popleft()
 
-    def _appendAccess(self) -> None:
+    def _appendAccess(self, link : str) -> None:
         print("Successfully processed append to queue...")
-        self.accesses.append(time.time())
+        append_time = time.time()
+        self.accesses.append(append_time)
+        entry = LogEntry(link, self.base)
+        entry.writeEntry()
+
 
     # Print dunder methods
     @popAccesses
