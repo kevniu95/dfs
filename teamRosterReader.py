@@ -1,12 +1,13 @@
 import requests
 from typing import Dict, Tuple, List, Any
-import bs4
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 import pandas as pd
 
-from bs4utils import get_ith_table, read_ith_table
+from bs4utils import get_ith_table
 from config import Config
 from requestLimiter import RequestLimiter
+
 
 config : Config = Config()
 # reader 
@@ -16,17 +17,18 @@ BASE : str = read_constants['base']
 
 """
 A. Separate, independent function
+    - Gets team names and links from {YEAR}_Summary page
 """
 def learn_teams_from_summary(link : str, rl : RequestLimiter) -> Dict[str, str]:
     tm_dict = {}
-    data = rl.get(requests.get, link)
+    data = rl.get(link)
     if not data:
-        print("Couldn't get information in learn_teams() function!")
+        print("Couldn't get information in learn_teams_from_summary() function!")
         return 
     data = data.text
     soup : BeautifulSoup = BeautifulSoup(data, 'html.parser')
     
-    table : bs4.element.Tag = get_ith_table(soup, 4, class_ = 'stats_table')
+    table : Tag = get_ith_table(soup, 4, class_ = 'stats_table')
     if table:
         rows = table.findChildren(['tr'])
         for row in rows:
@@ -50,6 +52,7 @@ class TeamRosterReader():
 
     """
     Getters and setters
+        -Do for each (tm, link) pair
     """
     def set_team(self, tm : str) -> None:
         self.tm = tm
@@ -62,27 +65,31 @@ class TeamRosterReader():
     """
     B. Get team info
     """
-    def get_team_info(self) -> Tuple[str, bs4.element.Tag]:
-        data = self.rl.get(requests.get, self.link)
+    def get_team_info(self) -> Tuple[str, Tag]:
+        data = self.rl.get(self.link, waitForPop = True)
         if not data:
             print(f"Unable to retrieve team info for {self.tm}!")
             return
         soup : BeautifulSoup = BeautifulSoup(data.text, 'html.parser')
         arena : str = self.get_arena(soup)
-        player_table : bs4.element.Tag = get_ith_table(soup, 0, id = 'roster')
+        player_table : Tag = get_ith_table(soup, 0, id = 'roster')
+        if arena is not None and len(arena) > 0:
+            print("Successfully retrieved arena...")
         return arena, player_table
 
 
     def get_arena(self, soup : BeautifulSoup) -> str:
         a = soup.find_all('div', id = 'meta')[0]
         p = a.find_all('p')[-1]
+        if "Playoffs" in p.text:
+            p = a.find_all('p')[-2]
         arena = p.contents[2].strip()
         return arena
 
     """
     C. Get player info
     """
-    def process_player_table(self, table : bs4.element.Tag) -> pd.DataFrame:
+    def process_player_table(self, table : Tag) -> pd.DataFrame:
         """
         Takes HTML table and adds links before creating pd.DataFrame
         """
@@ -140,12 +147,17 @@ class TeamRosterReader():
                     row['Birth Date'],
                     self._process_height(row['Ht']),
                     row['Wt'],
-                    row['No.'],
+                    self._process_number(row['No.']),
                     row['Pos'])
             rows.append(out)
         return rows
 
+
     # Tuple helpers
+    def _process_number(self, num : str) -> int:
+        return int(num[:num.find(',')])
+
+
     def _process_debut_season(self, exp : str) -> int:
         num = int(exp.replace('R','0'))
         return self.year - num

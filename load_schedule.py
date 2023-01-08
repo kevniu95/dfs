@@ -26,14 +26,27 @@ def load_teams(bases : Dict[str, str],
                 rl : RequestLimiter, 
                 trr : TeamRosterReader, 
                 dao : Dfs_dao):
+    """
+    A. Get team links
+    """
     team_links : Dict[str, str] = learn_teams_from_summary(bases['summary_base'], rl)
-    tl = dict((k, team_links[k]) for k in ['Boston Celtics', 
-                                            'Dallas Mavericks', 
-                                            'Phoenix Suns'])
-    for tm, link in tl.items():
+    # tl = dict((k, team_links[k]) for k in ['Boston Celtics', 
+    #                                         'Dallas Mavericks', 
+    #                                         'Phoenix Suns',
+    #                                         'Detroit Pistons',
+    #                                         'Los Angeles Lakers',
+    #                                         'San Antonio Spurs',
+    #                                         'Chicago Bulls',
+    #                                         'Cleveland Cavaliers'])
+    """
+    B. Load teams into DB
+    """
+    for tm, link in team_links.items():
         trr.set_team(tm)
         trr.set_link(link)
-        stadium, player_table = trr.get_team_info()
+        print(tm)
+        print(link)
+        stadium, player_table = trr.get_team_info() # This is where request is made
         df = trr.process_player_table(player_table)
         
         # 1. Create and load Team
@@ -77,7 +90,7 @@ if __name__ == '__main__':
     
     rl : RequestLimiter = RequestLimiter(BASE, 
                         interval = INTERVAL, 
-                        limit = LIMIT, 
+                        limit = LIMIT - 1, 
                         load = LOAD_FILE)
     
     trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)

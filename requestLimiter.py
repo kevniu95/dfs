@@ -5,9 +5,18 @@ import requests
 from requests.models import Response
 import pickle
 
+# class BatchRequestLimiter(RequestLimiter):
+#     """
+#     A request limiter that can handle a batch of requests larger than its limit
+#     """
+#     def __init__(self):
+
+
+
 class RequestLimiter():
     """
-    Static save decorator
+    i. Static save decorator
+        -Before Constructor
     """
     def _save(self, name = None, path = './data/rl/') -> None:
         if not name:
@@ -17,18 +26,30 @@ class RequestLimiter():
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def save(func):
+        print("In save function...")
         def wrapper(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
             self._save()
             return result
         return wrapper
 
-    """ Constructor """
+    def popAccesses(func):
+        def wrapper(self, *args, **kwargs):
+            self._popAccesses()
+            result = func(self, *args, **kwargs)
+            return result
+        return wrapper
+    
+            
+    """ 
+    A. Constructor
+    """
     @save
     def __init__(self, base_link : str = None, 
                     interval : int = None, # in seconds
                     limit : int = None, 
                     load : str = None):
+        print("In constructor...")
         if not (load and self._load(load)):
             print("Instantiating from constructor...")
             self.base : str = base_link
@@ -38,38 +59,68 @@ class RequestLimiter():
         self._popAccesses()
         print(f"Initialized with {self.length} of {self.limit} entries filled")
         print()
-        
+
+     
     """
-    Public Facing Methods
+    B. Public Facing Methods
     """
+    @popAccesses
     @save
-    def get(self, request : Callable, link : str) -> Response:
+    def get(self, link : str, waitForPop : bool = False, request : Callable = requests.get) -> Response:
+        """
+        waitForPop : bool 
+            - If set to True, will make block on time needed for Pop of first item in queue
+        """
+        print(waitForPop)
         if self.base not in link:
             print("You haven't indicated that this is a rate limited site!")
             return
-        self._popAccesses()
-        if self.length >= self.limit:
-            print("You're about to go over the limit, you'll have to wait!")
+        if self.full and not waitForPop:
+            print("You're about to go over the limit, you'll have to try again later.")
             return
+        if self.full and waitForPop:
+            print("You're about to go over the limit. Because you specified waitForPop, will wait for"\
+                    " front of queue to pop.")
+            self._wait_for_pop_time()
         res = request(link)
         self._appendAccess()
         print(f"Size of current queue... {self.length}")
         return res
     
+    @popAccesses
     @save
-    def getQueue(self):
-        self._popAccesses()
+    def getQueue(self) -> List[float]:
         return self.accesses
 
     @property
-    def length(self):
+    def full(self) -> bool:
+        return self.length >= self.limit
+
+    @property
+    def length(self) -> int:
         return len(self.accesses)
 
     """
-    Private Methods
+    C. Private Methods
     """
+    def _wait_for_pop_time(self) -> None:
+        pop_time : float= self._get_pop_time()
+        print(f"I'm going to sleep for {pop_time} - see ya!")
+        time.sleep(pop_time + 2)
+        print(f"Wow, just woke up after sleeping for {pop_time} - feeling refreshed!")
+        self._popAccesses()
+        return
+    
+    @popAccesses
+    def _get_pop_time(self) -> float:
+        if self.length == 0:
+            return 0
+        time_elapsed : float = time.time() - self.accesses[0]
+        time_to_go : float = self.interval - time_elapsed
+        return time_to_go
+
     # Constructor Helpers
-    def _load_handle_to_self(self, handle):
+    def _load_handle_to_self(self, handle : str) -> None:
         b = pickle.load(handle)
         self.base = b.base
         self.limit = b.limit
@@ -95,13 +146,15 @@ class RequestLimiter():
         self.accesses.append(time.time())
 
     # Print dunder methods
+    @popAccesses
     def __str__(self):
         return f"Website: {self.base} / Limit: {self.limit } / "\
-                "Visits in last {self.interval}: {self.length}"
+                f"Visits in last {self.interval}: {self.length}"
     
+    @popAccesses
     def __repr__(self):
         return f"Website: {self.base} / Limit: {self.limit } / "\
-                "Visits in last {self.interval}: {self.length}"
+                f"Visits in last {self.interval}: {self.length}"
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
+from typing import Dict
 import psycopg2
 from psycopg2.extensions import connection, cursor
-from configparser import ConfigParser
-from typing import Dict, Callable
+
 from config import Config
 
 

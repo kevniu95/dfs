@@ -4,6 +4,7 @@ import pickle
 import time
 import requests
 
+
 class LimitedScraper():
     def __init__(self, fx : Callable, name: str, linkDict: Dict[str, str], rl : RequestLimiter):
         self.fx = fx
