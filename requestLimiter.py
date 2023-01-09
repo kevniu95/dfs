@@ -18,7 +18,6 @@ class LogEntry():
     def __init__(self, web_link : str, web_base : str):
         self.web_link = web_link
         self.web_base = web_base
-        self.send_time = None
         self.rcv_time = None
         self.rcv_status = None
         self.load = self._init_load()
@@ -29,11 +28,11 @@ class LogEntry():
         return file
         
     def writeEntry(self):
-        x = threading.Thread(self._writeEntry)
+        x = threading.Thread(target = self._writeEntry)
         x.start()
     
     def _writeEntry(self):
-        writeMe = [self.web_link, self.base, self.send_time, self.rcv_time, self.rcv_status]
+        writeMe = [self.web_link, self.web_base, self.rcv_time, self.rcv_status]
         with open(self.load, 'a') as f:
             writer = csv.writer(f)
             writer.writerow(writeMe)
@@ -43,9 +42,6 @@ class LogEntry():
             return True
         return False
 
-    def set_send_time(self, send_time : float) -> None:
-        self.send_time = send_time
-    
     def set_rcv_time(self, rcv_time : float) -> None:
         self.rcv_time = rcv_time
     
@@ -99,7 +95,7 @@ class RequestLimiter():
         self._popAccesses()
         print(f"Initialized with {self.length} of {self.limit} entries filled")
         print()
-
+        
      
     """
     B. Public Facing Methods
@@ -123,7 +119,7 @@ class RequestLimiter():
                     " front of queue to pop.")
             self._wait_for_pop_time()
         res = request(link)
-        self._appendAccess(link)
+        self._appendAccess(res, link)
         print(f"Size of current queue... {self.length}")
         return res
     
@@ -146,7 +142,7 @@ class RequestLimiter():
     def _wait_for_pop_time(self) -> None:
         pop_time : float= self._get_pop_time()
         print(f"I'm going to sleep for {pop_time} - see ya!")
-        time.sleep(pop_time + 2)
+        time.sleep((1.25*(pop_time + 2)))
         print(f"Wow, just woke up after sleeping for {pop_time} - feeling refreshed!")
         self._popAccesses()
         return
@@ -181,11 +177,13 @@ class RequestLimiter():
         while (self.length > 0) and (time.time() - self.accesses[0] > self.interval):
             a = self.accesses.popleft()
 
-    def _appendAccess(self, link : str) -> None:
+    def _appendAccess(self, res : Response, link : str) -> None:
         print("Successfully processed append to queue...")
         append_time = time.time()
         self.accesses.append(append_time)
         entry = LogEntry(link, self.base)
+        entry.set_rcv_status(res)
+        entry.set_rcv_time(append_time)
         entry.writeEntry()
 
 
@@ -208,7 +206,7 @@ if __name__ == '__main__':
     #                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
     a = RequestLimiter(BASE, 
                     interval = 60, 
-                    limit = 20, 
+                    limit = 19, 
                     load = 'data/espn.com.p')
     
     for i in range(9):

@@ -92,7 +92,7 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
-    
+    print(f"This is the limit... {LIMIT}")
     trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
     dao : Dfs_dao = Dfs_dao(pgc)
 

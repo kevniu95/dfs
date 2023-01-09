@@ -155,7 +155,12 @@ class TeamRosterReader():
 
     # Tuple helpers
     def _process_number(self, num : str) -> int:
-        return int(num[:num.find(',')])
+        ans = None
+        try:
+            ans =  int(num[:num.find(',')])
+        except:
+            pass
+        return ans
 
 
     def _process_debut_season(self, exp : str) -> int:
