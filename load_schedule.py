@@ -3,7 +3,7 @@ import sys
 # adding Folder_2 to the system path
 sys.path.insert(0, '../utils')
 
-from typing import Dict
+from typing import Dict, List
 import argparse
 
 from config import Config
@@ -11,47 +11,39 @@ from pgConnect import PgConnection
 from dfs_dao import Dfs_dao
 from requestLimiter import RequestLimiter
 from teamRosterReader import TeamRosterReader, learn_teams_from_summary
-from draftReader import DraftReader
-
-# Schedule / Box_score
-# game_id / season  /  tm1  /  tm2  /  stadium  /  statistics
-# (create from pt of view of both teams later)
-
-# box_score_player
-# game_id  / player1 / opp  / statistics...
-# game_id  / player2 / opp  / statistics...
+from scheduleReader import BoxscoreReader, learn_schedule_from_month
 
 
-def load_teams(bases : Dict[str, str], 
-                rl : RequestLimiter, 
-                trr : TeamRosterReader, 
-                dao : Dfs_dao):
-    """
-    A. Get team links
-    """
-    team_links : Dict[str, str] = learn_teams_from_summary(bases['summary_base'], rl)
-   
-    """
-    B. Load teams into DB
-    """
-    for tm, link in team_links.items():
-        trr.set_team(tm)
-        trr.set_link(link)
+def load_schedule(schedule_base : str, 
+                    rl : RequestLimiter,
+                    br : BoxscoreReader):
+    for month in MONTHS[:1]:
+        link = schedule_base.format(YEAR, month)
+        df = learn_schedule_from_month(link, rl)
         
-        stadium, player_table = trr.get_team_info() # This is where request is made
-        df = trr.process_player_table(player_table)
-        
-        # 1. Create and load Team
-        team_tup = [(YEAR, tm, stadium)]
-        dao.team_to_db(team_tup)
-        # 2. Create and load Player
-        player_tups = trr.process_rows_for_player(df)
-        dao.players_to_db(player_tups)
-        # 3. Create and load Roster
-        roster_tups = trr.process_rows_for_roster(df, tm)
-        dao.roster_to_db(roster_tups)
-    return
+        ctr = 0
+        for num, row in df.iterrows():
+            link = BASE + row['game_link']
+            br.set_link(link)
+            br.get_soup()
 
+            emptyTuple = ()
+            br.get_line_score(emptyTuple)
+            br.get_four_factors()
+            br.get_box_1()
+            br.get_box_2()
+            br.get_abox_1()
+            br.get_abox_2()
+
+            player_box, tm_box = process_df_for_tups()
+
+            dao.player_box_to_db()
+            dao.tm_box_to_db()
+            
+            ctr += 1
+            if ctr > 0:
+                break
+            
 
 if __name__ == '__main__':
     # ======
@@ -85,10 +77,20 @@ if __name__ == '__main__':
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
     trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
+    br : BoxscoreReader = BoxscoreReader(rl)
     dao : Dfs_dao = Dfs_dao(pgc)
 
-    bases = {'summary_base' :BASE + f'/leagues/NBA_{YEAR}.html',
-                'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html',
-                'draft_base' : BASE + f'/draft/NBA_{YEAR}.html'}
-
-    load_teams(bases = bases, rl = rl, trr = trr, dao = dao)
+    schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
+    
+    MONTHS : List[str] = ['october', 
+                'november', 
+                'december', 
+                'january',
+                'february',
+                'march',
+                'april',
+                'may',
+                'june']
+    
+    load_schedule(schedule_base, rl, br)
+    
