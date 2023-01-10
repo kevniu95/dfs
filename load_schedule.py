@@ -52,13 +52,6 @@ def load_teams(bases : Dict[str, str],
         dao.roster_to_db(roster_tups)
     return
 
-def load_draft(bases : Dict[str, str], 
-                rl : RequestLimiter, 
-                trr : TeamRosterReader, 
-                dao : Dfs_dao):
-    print(bases)
-    pass
-
 
 if __name__ == '__main__':
     # ======
@@ -91,7 +84,6 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
-    
     trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
     dao : Dfs_dao = Dfs_dao(pgc)
 
@@ -99,6 +91,4 @@ if __name__ == '__main__':
                 'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html',
                 'draft_base' : BASE + f'/draft/NBA_{YEAR}.html'}
 
-
-    dr : DraftReader = DraftReader(rl)
-    print(dr.load_draft_data(YEAR))
+    load_teams(bases = bases, rl = rl, trr = trr, dao = dao)

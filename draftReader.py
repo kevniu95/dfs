@@ -67,6 +67,7 @@ class DraftReader():
         my_res = df[['Pk', 'Tm', 'Player', 'College', 'Player_link']]
         return my_res
     
+    
     def _process_rows_for_draft(self, df : pd.DataFrame, year: int) -> List[Tuple[Any, ...]]:
         rows = []
         for _, row in df.iterrows():

@@ -13,19 +13,9 @@ from typing import Dict, List, Tuple
 # Players
 # player_id / player_name / birth_date / country / start_yr / college
 
+# Draft
+# year / pick_num / team / player / college / link
 
-
-def _exec_command(pgc : PgConnection, commands : Tuple[str])-> None:
-    conn = pgc.getConn()
-    cur  = pgc.getCurs()
-    for command in commands:
-        print("Executing command...")
-        cur.execute(command)
-    
-    cur.close()
-    conn.commit()
-    conn.close()
-    return
 
 def update_draft_tables(pgc : PgConnection):
     commands = (
@@ -110,6 +100,20 @@ def create_player_tables(pgc : PgConnection):
                 """
                 )
     _exec_command(pgc, commands)
+
+
+def _exec_command(pgc : PgConnection, commands : Tuple[str])-> None:
+    conn = pgc.getConn()
+    cur  = pgc.getCurs()
+    for command in commands:
+        print("Executing command...")
+        cur.execute(command)
+    
+    cur.close()
+    conn.commit()
+    conn.close()
+    return
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

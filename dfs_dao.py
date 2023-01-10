@@ -18,7 +18,7 @@ class Dfs_dao():
                 "(year, pick) DO NOTHING"
         self._try_insertion(qry, 'draft')
         
-        
+
     def players_to_db(self, tups : List[Tuple[Any, ...]]) -> None:
         args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s)", 
                         i).decode('utf-8') for i in tups)
@@ -54,5 +54,4 @@ class Dfs_dao():
         except Exception as e:
             print(f"Couldn't execute and commit {insertion_type} insertion!")
             print(str(e))
-            print(f"Query was... {qry}")
-            
+            print(f"Query was... {qry}")        
