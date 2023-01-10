@@ -15,25 +15,31 @@ import threading
 
 
 class LogEntry():
+    """
+    A. Constructor and helper
+    """
     def __init__(self, web_link : str, web_base : str):
         self.web_link = web_link
         self.web_base = web_base
         self.rcv_time = None
         self.rcv_status = None
-        self.load = self._init_load()
+        self.load_dest = self._init_load()
     
     def _init_load(self, path : str = './data/rl/log/') -> str:
         name = self.web_base[self.web_base.find('.') + 1:]
         file = path + name + '.csv'
         return file
-        
-    def writeEntry(self):
+    
+    """
+    B. Public Facing Methods
+    """
+    def writeEntry(self) -> None:
         x = threading.Thread(target = self._writeEntry)
         x.start()
-    
-    def _writeEntry(self):
+    # Helper
+    def _writeEntry(self) -> None:
         writeMe = [self.web_link, self.web_base, self.rcv_time, self.rcv_status]
-        with open(self.load, 'a') as f:
+        with open(self.load_dest, 'a') as f:
             writer = csv.writer(f)
             writer.writerow(writeMe)
         
@@ -42,6 +48,9 @@ class LogEntry():
             return True
         return False
 
+    """
+    C. Getters and setters
+    """
     def set_rcv_time(self, rcv_time : float) -> None:
         self.rcv_time = rcv_time
     
@@ -51,7 +60,7 @@ class LogEntry():
 
 class RequestLimiter():
     """
-    i. Static save decorator
+    i. Static decorators
         -Before Constructor
     """
     def _save(self, name = None, path = './data/rl/') -> None:
@@ -102,12 +111,11 @@ class RequestLimiter():
     """
     @popAccesses
     @save
-    def get(self, link : str, waitForPop : bool = False, request : Callable = requests.get) -> Response:
+    def get(self, link : str, waitForPop : bool = False, http_request : Callable = requests.get) -> Response:
         """
         waitForPop : bool 
             - If set to True, will make block on time needed for Pop of first item in queue
         """
-        print(waitForPop)
         if self.base not in link:
             print("You haven't indicated that this is a rate limited site!")
             return
@@ -118,7 +126,7 @@ class RequestLimiter():
             print("You're about to go over the limit. Because you specified waitForPop, will wait for"\
                     " front of queue to pop.")
             self._wait_for_pop_time()
-        res = request(link)
+        res = http_request(link)
         self._appendAccess(res, link)
         print(f"Size of current queue... {self.length}")
         return res
@@ -141,9 +149,9 @@ class RequestLimiter():
     """
     def _wait_for_pop_time(self) -> None:
         pop_time : float= self._get_pop_time()
-        print(f"I'm going to sleep for {pop_time} - see ya!")
+        print(f"I'm going to sleep for over {pop_time} seconds - see ya!")
         time.sleep((1.25*(pop_time + 2)))
-        print(f"Wow, just woke up after sleeping for {pop_time} - feeling refreshed!")
+        print(f"Wow, just woke up after sleeping for {1.25*(pop_time + 2)} - feeling refreshed!")
         self._popAccesses()
         return
     
@@ -185,7 +193,6 @@ class RequestLimiter():
         entry.set_rcv_status(res)
         entry.set_rcv_time(append_time)
         entry.writeEntry()
-
 
     # Print dunder methods
     @popAccesses

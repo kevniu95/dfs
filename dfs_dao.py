@@ -10,6 +10,15 @@ class Dfs_dao():
         self.cur : cursor = pgc.getCurs()
     
 
+    def draft_to_db(self, tups : List[Tuple[Any,...]]) -> None:
+        args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s)", 
+                        i).decode('utf-8') for i in tups)
+        # Make and try query
+        qry = "INSERT INTO draft VALUES " + (args) + " ON CONFLICT "\
+                "(year, pick) DO NOTHING"
+        self._try_insertion(qry, 'draft')
+        
+        
     def players_to_db(self, tups : List[Tuple[Any, ...]]) -> None:
         args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s)", 
                         i).decode('utf-8') for i in tups)

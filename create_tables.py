@@ -1,7 +1,7 @@
 import argparse
 from pgConnect import PgConnection
 from config import Config
-from typing import Dict
+from typing import Dict, List, Tuple
 
 
 # Season
@@ -14,9 +14,56 @@ from typing import Dict
 # player_id / player_name / birth_date / country / start_yr / college
 
 
-def create_player_tables(pgc : PgConnection):
+
+def _exec_command(pgc : PgConnection, commands : Tuple[str])-> None:
     conn = pgc.getConn()
     cur  = pgc.getCurs()
+    for command in commands:
+        print("Executing command...")
+        cur.execute(command)
+    
+    cur.close()
+    conn.commit()
+    conn.close()
+    return
+
+def update_draft_tables(pgc : PgConnection):
+    commands = (
+                """
+                ALTER TABLE player
+                ADD draft_year INTEGER,
+                ADD draft_team VARCHAR(255);
+
+                UPDATE player
+                    SET draft = b.pick,
+                        draft_year = b.year,
+                        draft_team = b.team
+                FROM Draft AS b
+                WHERE player_name = b.player AND player.link = b.link;
+                """,
+                )
+    _exec_command(pgc, commands)
+
+
+def create_draft_table(pgc : PgConnection):
+    commands = (
+                """
+                CREATE TABLE draft(
+                    year INTEGER NOT NULL,
+                    pick INTEGER NOT NULL,
+                    team VARCHAR(10) NOT NULL,
+                    player VARCHAR(255) NOT NULL,
+                    college VARCHAR(255),
+                    link VARCHAR(255),
+                    PRIMARY KEY (year, pick),
+                    UNIQUE (year, pick)
+                )
+                """,
+                )
+    _exec_command(pgc, commands)
+
+
+def create_player_tables(pgc : PgConnection):
     commands = (
                 """
                 CREATE TABLE team (
@@ -61,16 +108,8 @@ def create_player_tables(pgc : PgConnection):
                         REFERENCES team(season, team)
                 )
                 """
-    )
-    for command in commands:
-        print("Executing command...")
-        cur.execute(command)
-    
-    cur.close()
-    conn.commit()
-    conn.close()
-    return
-
+                )
+    _exec_command(pgc, commands)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -82,6 +121,8 @@ if __name__ == '__main__':
     pgc = PgConnection(conf)
 
     fx_dict = {'player' : create_player_tables,
+                'draft' : create_draft_table,
+                'draft2player' : update_draft_tables,
                 'box' : 'create_box_tables'}
     
     fx = fx_dict[create_type]

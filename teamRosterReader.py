@@ -73,8 +73,6 @@ class TeamRosterReader():
         soup : BeautifulSoup = BeautifulSoup(data.text, 'html.parser')
         arena : str = self.get_arena(soup)
         player_table : Tag = get_ith_table(soup, 0, id = 'roster')
-        if arena is not None and len(arena) > 0:
-            print("Successfully retrieved arena...")
         return arena, player_table
 
 
@@ -138,7 +136,7 @@ class TeamRosterReader():
         return rows
 
 
-    def process_rows_for_roster(self, df, tm):
+    def process_rows_for_roster(self, df : pd.DataFrame, tm : str):
         rows = []
         for _, row in df.iterrows():
             out = (self.year,

@@ -10,8 +10,8 @@ from config import Config
 from pgConnect import PgConnection
 from dfs_dao import Dfs_dao
 from requestLimiter import RequestLimiter
-from limitedScraper import LimitedScraper
 from teamRosterReader import TeamRosterReader, learn_teams_from_summary
+from draftReader import DraftReader
 
 # Schedule / Box_score
 # game_id / season  /  tm1  /  tm2  /  stadium  /  statistics
@@ -30,22 +30,14 @@ def load_teams(bases : Dict[str, str],
     A. Get team links
     """
     team_links : Dict[str, str] = learn_teams_from_summary(bases['summary_base'], rl)
-    tl = dict((k, team_links[k]) for k in ['Boston Celtics', 
-                                            'Dallas Mavericks', 
-                                            'Phoenix Suns',
-                                            'Detroit Pistons'])
-    #                                         'Los Angeles Lakers',
-    #                                         'San Antonio Spurs',
-    #                                         'Chicago Bulls',
-    #                                         'Cleveland Cavaliers'])
+   
     """
     B. Load teams into DB
     """
     for tm, link in team_links.items():
         trr.set_team(tm)
         trr.set_link(link)
-        print(tm)
-        print(link)
+        
         stadium, player_table = trr.get_team_info() # This is where request is made
         df = trr.process_player_table(player_table)
         
@@ -59,6 +51,13 @@ def load_teams(bases : Dict[str, str],
         roster_tups = trr.process_rows_for_roster(df, tm)
         dao.roster_to_db(roster_tups)
     return
+
+def load_draft(bases : Dict[str, str], 
+                rl : RequestLimiter, 
+                trr : TeamRosterReader, 
+                dao : Dfs_dao):
+    print(bases)
+    pass
 
 
 if __name__ == '__main__':
@@ -92,11 +91,14 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
-    print(f"This is the limit... {LIMIT}")
+    
     trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
     dao : Dfs_dao = Dfs_dao(pgc)
 
     bases = {'summary_base' :BASE + f'/leagues/NBA_{YEAR}.html',
-                'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html'}
+                'schedule_base' : BASE + '/leagues/NBA_%s_games-%s.html',
+                'draft_base' : BASE + f'/draft/NBA_{YEAR}.html'}
 
-    load_teams(bases = bases, rl = rl, trr = trr, dao = dao)
+
+    dr : DraftReader = DraftReader(rl)
+    print(dr.load_draft_data(YEAR))
