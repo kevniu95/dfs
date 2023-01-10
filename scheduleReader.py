@@ -44,6 +44,9 @@ class BoxscoreReader():
         else:
             print("No link has been set yet!")
     
+    # def get_line_score():
+
+
     def __str__(self):
         return f"Link: {self.link}"
     

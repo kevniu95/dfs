@@ -12,7 +12,7 @@ from dfs_dao import Dfs_dao
 from requestLimiter import RequestLimiter
 from teamRosterReader import TeamRosterReader, learn_teams_from_summary
 from scheduleReader import BoxscoreReader, learn_schedule_from_month
-
+from bs4 import BeautifulSoup
 
 def load_schedule(schedule_base : str, 
                     rl : RequestLimiter,
@@ -25,20 +25,20 @@ def load_schedule(schedule_base : str,
         for num, row in df.iterrows():
             link = BASE + row['game_link']
             br.set_link(link)
-            br.get_soup()
-
+            soup : BeautifulSoup  = br.get_soup()
+            
             emptyTuple = ()
-            br.get_line_score(emptyTuple)
-            br.get_four_factors()
-            br.get_box_1()
-            br.get_box_2()
-            br.get_abox_1()
-            br.get_abox_2()
+            # br.get_line_score(emptyTuple)
+            # br.get_four_factors()
+            # br.get_box_1()
+            # br.get_box_2()
+            # br.get_abox_1()
+            # br.get_abox_2()
 
-            player_box, tm_box = process_df_for_tups()
+            # player_box, tm_box = process_df_for_tups()
 
-            dao.player_box_to_db()
-            dao.tm_box_to_db()
+            # dao.player_box_to_db()
+            # dao.tm_box_to_db()
             
             ctr += 1
             if ctr > 0:

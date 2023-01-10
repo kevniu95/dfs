@@ -16,6 +16,110 @@ from typing import Dict, List, Tuple
 # Draft
 # year / pick_num / team / player / college / link
 
+# team_box
+
+# player_box
+
+
+def create_boxscore_tables(pgc : PgConnection):
+    commands = ("""
+                CREATE TABLE team_box(
+                    game_date DATE NOT NULL,
+                    game_time TIME NOT NULL,
+                    attendance INTEGER NOT NULL,
+                    arena VARCHAR(255) NOT NULL,
+                    tm1 VARCHAR(255) NOT NULL,
+                    home INTEGER NOT NULL,
+                    FGM INTEGER NOT NULL,
+                    FGA INTEGER NOT NULL,
+                    FG_pct FLOAT NOT NULL,
+                    TPM INTEGER NOT NULL,
+                    TPA INTEGER NOT NULL,
+                    TP_pct FLOAT NOT NULL,
+                    FTM INTEGER NOT NULL,
+                    FTA INTEGER NOT NULL,
+                    FT_pct FLOAT NOT NULL,
+                    ORB INTEGER NOT NULL,
+                    DRB INTEGER NOT NULL,
+                    TRB INTEGER NOT NULL,
+                    AST INTEGER NOT NULL,
+                    STL INTEGER NOT NULL,
+                    BLK INTEGER NOT NULL,
+                    TOV INTEGER NOT NULL,
+                    PF INTEGER NOT NULL,
+                    PTS INTEGER NOT NULL,
+                    TS_pct FLOAT NOT NULL,
+                    eFG_pct FLOAT NOT NULL,
+                    TPAr FLOAT NOT NULL,
+                    FTr FLOAT NOT NULL,
+                    ORB_pct FLOAT NOT NULL,
+                    DRB_pct FLOAT NOT NULL,
+                    TRB_pct FLOAT NOT NULL,
+                    AST_pct FLOAT NOT NULL,
+                    STL_pct FLOAT NOT NULL,
+                    BLK_pct FLOAT NOT NULL,
+                    TOV_pct FLOAT NOT NULL,
+                    USG_pct FLOAT NOT NULL,
+                    ORtg FLOAT NOT NULL,
+                    DRtg FLOAT NOT NULL,
+                    tm2 VARCHAR(255) NOT NULL,
+                    home_a INTEGER NOT NULL,
+                    FGM_a INTEGER NOT NULL,
+                    FGA_a INTEGER NOT NULL,
+                    FG_pct_a FLOAT NOT NULL,
+                    TPM_a INTEGER NOT NULL,
+                    TPA_a INTEGER NOT NULL,
+                    TP_pct_a FLOAT NOT NULL,
+                    FTM_a INTEGER NOT NULL,
+                    FTA_a INTEGER NOT NULL,
+                    FT_pct_a FLOAT NOT NULL,
+                    ORB_a INTEGER NOT NULL,
+                    DRB_a INTEGER NOT NULL,
+                    TRB_a INTEGER NOT NULL,
+                    AST_a INTEGER NOT NULL,
+                    STL_a INTEGER NOT NULL,
+                    BLK_a INTEGER NOT NULL,
+                    TOV_a INTEGER NOT NULL,
+                    PF_a INTEGER NOT NULL,
+                    PTS_a INTEGER NOT NULL,
+                    TS_pct_a FLOAT NOT NULL,
+                    eFG_pct_a FLOAT NOT NULL,
+                    TPAr_a FLOAT NOT NULL,
+                    FTr_a FLOAT NOT NULL,
+                    ORB_pct_a FLOAT NOT NULL,
+                    DRB_pct_a FLOAT NOT NULL,
+                    TRB_pct_a FLOAT NOT NULL,
+                    AST_pct_a FLOAT NOT NULL,
+                    STL_pct_a FLOAT NOT NULL,
+                    BLK_pct_a FLOAT NOT NULL,
+                    TOV_pct_a FLOAT NOT NULL,
+                    USG_pct_a FLOAT NOT NULL,
+                    ORtg_a FLOAT NOT NULL,
+                    DRtg_a FLOAT NOT NULL,
+                    PRIMARY KEY (game_date, game_time, tm1, tm2),
+                    UNIQUE (game_date, game_time, tm1, tm2)
+                )
+                """,
+                )
+    _exec_command(pgc,commands)
+
+def create_draft_table(pgc : PgConnection):
+    commands = (
+                """
+                CREATE TABLE draft(
+                    year INTEGER NOT NULL,
+                    pick INTEGER NOT NULL,
+                    team VARCHAR(10) NOT NULL,
+                    player VARCHAR(255) NOT NULL,
+                    college VARCHAR(255),
+                    link VARCHAR(255),
+                    PRIMARY KEY (year, pick),
+                    UNIQUE (year, pick)
+                )
+                """,
+                )
+    _exec_command(pgc, commands)
+
 
 def update_draft_tables(pgc : PgConnection):
     commands = (
@@ -127,7 +231,7 @@ if __name__ == '__main__':
     fx_dict = {'player' : create_player_tables,
                 'draft' : create_draft_table,
                 'draft2player' : update_draft_tables,
-                'box' : 'create_box_tables'}
+                'box' : create_boxscore_tables}
     
     fx = fx_dict[create_type]
     fx(pgc)
