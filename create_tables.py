@@ -127,7 +127,7 @@ def create_boxscore_tables(pgc : PgConnection):
                     TOV INTEGER NOT NULL,
                     PF INTEGER NOT NULL,
                     PTS INTEGER NOT NULL,
-                    PlusMinus INTEGER NOT NULL,
+                    PlusMinus FLOAT NOT NULL,
 
                     TS_pct FLOAT,
                     eFG_pct FLOAT,

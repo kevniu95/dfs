@@ -2,6 +2,7 @@ import sys
  # adding Folder_2 to the system path
 sys.path.insert(0, '../utils')
 
+import re
 from typing import Dict, List, Tuple, Any
 import argparse
 import pandas as pd
@@ -34,7 +35,7 @@ def load_schedule(schedule_base : str,
             soup : BeautifulSoup  = br.get_soup()
             tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
             
-            game_info = (row['Date'], br.process_time(row['Start (ET)']), str(row['Attend.']).rstrip('.0'), row['Arena']) 
+            game_info = (row['Date'], br.process_time(row['Start (ET)']), treat_attend(row['Attend.']), row['Arena']) 
             game_entry_tuple1 = game_info + tm1_tuple + tm2_tuple
             game_entry_tuple2 = game_info + tm2_tuple + tm1_tuple
 
@@ -48,10 +49,17 @@ def load_schedule(schedule_base : str,
             dao.player_box_to_db(tm1_players)
             dao.player_box_to_db(tm2_players)
             print()
-            ctr += 1
-            if ctr > 0:
-                break
+
+            # ctr += 1
+            # if ctr > 0:
+            #     break
             
+def treat_attend(attd : int):
+    attd = re.sub(r"\.0$","", str(attd))
+    if len(attd) == 0:
+        return '0'
+    return attd
+
 
 if __name__ == '__main__':
     # ======
