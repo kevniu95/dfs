@@ -1,45 +1,53 @@
 import sys
- 
-# adding Folder_2 to the system path
+ # adding Folder_2 to the system path
 sys.path.insert(0, '../utils')
 
-from typing import Dict, List
+from typing import Dict, List, Tuple, Any
 import argparse
+import pandas as pd
 
 from config import Config
 from pgConnect import PgConnection
 from dfs_dao import Dfs_dao
 from requestLimiter import RequestLimiter
-from teamRosterReader import TeamRosterReader, learn_teams_from_summary
 from scheduleReader import BoxscoreReader, learn_schedule_from_month
 from bs4 import BeautifulSoup
 
 def load_schedule(schedule_base : str, 
                     rl : RequestLimiter,
                     br : BoxscoreReader):
-    for month in MONTHS[:1]:
-        link = schedule_base.format(YEAR, month)
-        df = learn_schedule_from_month(link, rl)
+    
+    for month in MONTHS:
+        print('\n' + month)
+        link : str = schedule_base.format(YEAR, month)
+        df : pd.DataFrame = learn_schedule_from_month(link, rl)
+        if df is None or len(df) == 0:
+            print("Continuing to next month...")
+            continue
         
         ctr = 0
-        for num, row in df.iterrows():
-            link = BASE + row['game_link']
+        for _, row in df.iterrows():
+            link : str = BASE + row['game_link']
+            print(link)
+
             br.set_link(link)
             soup : BeautifulSoup  = br.get_soup()
+            tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
             
-            emptyTuple = ()
-            # br.get_line_score(emptyTuple)
-            # br.get_four_factors()
-            # br.get_box_1()
-            # br.get_box_2()
-            # br.get_abox_1()
-            # br.get_abox_2()
+            game_info = (row['Date'], br.process_time(row['Start (ET)']), str(row['Attend.']).rstrip('.0'), row['Arena']) 
+            game_entry_tuple1 = game_info + tm1_tuple + tm2_tuple
+            game_entry_tuple2 = game_info + tm2_tuple + tm1_tuple
 
-            # player_box, tm_box = process_df_for_tups()
+            tm1 : str = game_entry_tuple1[4]
+            tm2 : str = game_entry_tuple2[4]
 
-            # dao.player_box_to_db()
-            # dao.tm_box_to_db()
+            tm1_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm1_players, tm1, tm2)
+            tm2_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm2_players, tm2, tm1)
             
+            dao.team_box_to_db([game_entry_tuple1, game_entry_tuple2])
+            dao.player_box_to_db(tm1_players)
+            dao.player_box_to_db(tm2_players)
+            print()
             ctr += 1
             if ctr > 0:
                 break
@@ -76,21 +84,20 @@ if __name__ == '__main__':
                         interval = INTERVAL, 
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
-    trr : TeamRosterReader = TeamRosterReader(None, None, YEAR, rl)
     br : BoxscoreReader = BoxscoreReader(rl)
     dao : Dfs_dao = Dfs_dao(pgc)
 
     schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
     
     MONTHS : List[str] = ['october', 
-                'november', 
-                'december', 
-                'january',
-                'february',
-                'march',
-                'april',
-                'may',
-                'june']
+                            'november', 
+                            'december', 
+                            'january',
+                            'february',
+                            'march',
+                            'april',
+                            'may',
+                            'june']
     
     load_schedule(schedule_base, rl, br)
     

@@ -22,8 +22,20 @@ class Dfs_dao():
         
         qry = "INSERT INTO team_box VALUES " + (args) + " ON CONFLICT "\
                 "(game_date, game_time, tm1, tm2) DO NOTHING"
-
         self._try_insertion(qry, 'team_box')
+
+
+    def player_box_to_db(self, tups : List[Tuple[Any,...]]) -> None:
+        args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\
+                                            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\
+                                            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\
+                                            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s"\
+                                            ")",
+                                            i).decode('utf-8') for i in tups)
+        qry = "INSERT INTO player_box VALUES " + (args) + " ON CONFLICT "\
+                "(game_date, game_time, tm1, tm2, player_name) DO NOTHING"
+        self._try_insertion(qry, 'player_box')
+
 
     def draft_to_db(self, tups : List[Tuple[Any,...]]) -> None:
         print(tups[0])
