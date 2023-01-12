@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 from bs4utils import get_ith_table, read_ith_table
 import pandas as pd
+import numpy as np
 
 from requestLimiter import RequestLimiter
 
@@ -77,7 +78,7 @@ class BoxscoreReader():
         # B. Generate original team and player tuples
         tm1_tup, tm1_players = self._process_team_tables(soup, tm1_inds)
         tm2_tup, tm2_players = self._process_team_tables(soup, tm2_inds)
-
+        
         # C. Edit teams before returning
         tm1_players = self._check_players(tm1_players)
         tm2_players = self._check_players(tm2_players)
@@ -89,14 +90,16 @@ class BoxscoreReader():
 
     
     def process_time(self, tim : str) -> str:
-        tim_list = tim.split(':')
-        
-        tim_list[1] = tim_list[1][:-1]
-        if 'p' in tim:
-            tim_list[0] = int(tim_list[0]) + 12
-        tim_list.append('00')
-        tim_str = ':'.join([str(i) for i in tim_list])
-        return tim_str
+            tim_list = tim.split(':')
+            
+            tim_list[1] = tim_list[1][:-1]
+            if 'p' in tim and tim_list[0] != '12':
+                tim_list[0] = int(tim_list[0]) + 12
+            if 'a' in tim and tim_list[0] == '12':
+                tim_list[0] = '00'
+            tim_list.append('00')
+            tim_str = ':'.join([str(i) for i in tim_list])
+            return tim_str
 
 
     def update_player_tups(self,
@@ -149,12 +152,17 @@ class BoxscoreReader():
     def _get_tm_info(self, df : pd.DataFrame) -> Tuple[Any, ...]:
         last_row = df.iloc[-1, :]
         assert last_row['Starters'] == 'Team Totals'
-        tup = tuple(list(last_row)[2:-1])
+        curr_list = list(last_row)[2:]
+        while curr_list[-1] in [np.nan, None]:
+            curr_list.pop(-1)
+        tup = tuple(curr_list)
         return tup
     
     def _get_player_tuples(self, df : pd.DataFrame(), playerTups : List[Tuple[Any,...]]) -> List[Tuple[Any, ...]]:
         player_df = df[df['MP'].str.find(':') > -1].copy()
         player_df = player_df.sort_values(['MP', 'Starters'], ascending = [False, True]).reset_index()
+        if len(player_df.columns == 17) and list(player_df.columns)[-1] == 'DRtg':
+            player_df['dummy'] = np.nan
         for num, row in player_df.iterrows():
             player_list : List[Any] = list(row)[1:]
             player_list[1] = self._get_minutes(player_list[1])

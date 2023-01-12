@@ -38,7 +38,6 @@ class Dfs_dao():
 
 
     def draft_to_db(self, tups : List[Tuple[Any,...]]) -> None:
-        print(tups[0])
         args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s)", 
                         i).decode('utf-8') for i in tups)
         

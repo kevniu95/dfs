@@ -30,8 +30,8 @@ def load_schedule(schedule_base : str,
         for _, row in df.iterrows():
             link : str = BASE + row['game_link']
             print(link)
-
             br.set_link(link)
+            
             soup : BeautifulSoup  = br.get_soup()
             tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
             
@@ -56,7 +56,7 @@ def load_schedule(schedule_base : str,
             
 def treat_attend(attd : int):
     attd = re.sub(r"\.0$","", str(attd))
-    if len(attd) == 0:
+    if len(attd) == 0 or attd == 'nan':
         return '0'
     return attd
 
