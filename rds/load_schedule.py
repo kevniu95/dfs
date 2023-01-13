@@ -1,110 +1,135 @@
+import sys
+ # adding Folder_2 to the system path
+sys.path.insert(0, '../utils')
+
+import re
+from typing import Dict, List, Tuple, Any
+import argparse
 import pandas as pd
+import datetime
+
+from config import Config
+from pgConnect import PgConnection
+from dfs_dao import Dfs_dao
+from requestLimiter import RequestLimiter
+from scheduleReader import BoxscoreReader, learn_schedule_from_month
 from bs4 import BeautifulSoup
-import requests 
-from typing import Dict
 
-# Season
-# season  /  team_name  /  stadium_name
-
-# Rosters 
-# season / team_name / player_id / player_name / Pos / Exp
-
-# Players
-# player_id / player_name / birth_date / country / start_yr / college
-
-# Schedule / Box_score
-# game_id / season  /  tm1  /  tm2  /  stadium  /  statistics
-# (create from pt of view of both teams later)
-
-# box_score_player
-# game_id  / player1 / opp  / statistics...
-# game_id  / player2 / opp  / statistics...
-
-
-# Teams
-# id / teamName /  
-
-def main(year : int, bases : Dict[str, str]):
-    teams : Dict[str, Dict] = learn_teams(bases['summary_base'])
-    for k in teams.keys():
-        arena, roster = get_team_info(k, teams)
-        teams[k]['arena'] = arena
-        teams[k]['roster'] = roster
+def load_schedule(schedule_base : str, 
+                    rl : RequestLimiter,
+                    br : BoxscoreReader,
+                    today : bool):
     
+    process_months : List[str] = MONTHS
+    if today:
+        process_months : List[str] = [datetime.date.today().strftime('%B').lower()]
 
-def get_team_info(team_key : str, teams : Dict[str, str]):
-    team = teams[team_key]
-    tm_link = BASE = team['link']
-
-    data = requests.get(tm_link).text
-    soup = BeautifulSoup(data, 'html.parser')
-    arena = get_arena(soup)
-    roster = read_ith_table(soup, 0, id = 'roster')
-    return arena, roster
-
-
-def learn_teams(link : str) -> Dict[str, Dict]:
-    tm_dict = {}
-    data = requests.get(link).text
-    soup = BeautifulSoup(data, 'html.parser')
-    
-    table = get_ith_table(soup, 4, class_ = 'stats_table')
-    if table:
-        rows = table.findChildren(['tr'])
-        for row in rows:
-            for a in row.find_all('a'):
-                tm_dict[a.text] = {'link' : a.get('href')}
-    else:
-        print("Hit rate limit on website!")
-    return tm_dict
-
+    for month in process_months:
+        print('\n' + month)
+        link : str = schedule_base.format(YEAR, month)
+        df : pd.DataFrame = learn_schedule_from_month(link, rl)
+        if df is None or len(df) == 0:
+            print("Continuing to next month...")
+            continue
         
-def get_arena(soup):
-    # Find arena
-    a = soup.find_all('div', id = 'meta')[0]
-    p = a.find_all('p')[-1]
-    arena = p.contents[2].strip()
-    return arena
+        if today:
+            df['today'] = pd.to_datetime(df['Date']).dt.date
+            df = df[df['tday'] == datetime.date.today()].copy()            
 
+        ctr = 0
+        for _, row in df.iterrows():
+            link : str = BASE + row['game_link']
+            print(link)
+            br.set_link(link)
 
-def get_ith_table(soup, i, **kwargs):
-    # Get and return table
-    tables = soup.find_all('table', **kwargs)
-    if len(tables) > 0:
-        table = tables[i]
-        return table
-    else:
-        print("No table found on this HTML page!")
-        
-def read_ith_table(soup, i, **kwargs):
-    table = get_ith_table(soup, i, **kwargs)
-    if table:
-        return pd.read_html(str(table), flavor='html5lib')[0]    
+            soup : BeautifulSoup  = br.get_soup()
+            tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
+            
+            game_info = (row['Date'], br.process_time(row['Start (ET)']), treat_attend(row['Attend.']), row['Arena']) 
+            game_entry_tuple1 = game_info + tm1_tuple + tm2_tuple
+            game_entry_tuple2 = game_info + tm2_tuple + tm1_tuple
 
+            tm1 : str = game_entry_tuple1[4]
+            tm2 : str = game_entry_tuple2[4]
 
-    
-def load_month(month):
-    link = base % (2022, month)
-    df = read_ith_table(link)
-    print(df)
-    
+            tm1_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm1_players, tm1, tm2)
+            tm2_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm2_players, tm2, tm1)
+            
+            dao.team_box_to_db([game_entry_tuple1, game_entry_tuple2])
+            dao.player_box_to_db(tm1_players)
+            dao.player_box_to_db(tm2_players)
+            print()
 
+            # ctr += 1
+            # if ctr > 0:
+            #     break
+            
+def treat_attend(attd : int):
+    attd = re.sub(r"\.0$","", str(attd))
+    if len(attd) == 0 or attd == 'nan':
+        return '0'
+    return attd
 
 
 if __name__ == '__main__':
-    BASE = 'https://www.basketball-reference.com'
-    bases = {'summary_base' :BASE + '/leagues/NBA_2023.html',
-                    'schedule_base' : BASE + 'leagues/NBA_%s_games-%s.html'}
+    # ======
+    # 1. Read configs
+    # ======
+    config : Config = Config()
+    pgc : PgConnection = PgConnection(config)
     
-    year = 2022
-    MONTHS = [i.lower() for i in ['October',
-                'November',
-                'December', 
-                'January', 
-                'February', 
-                'March', 
-                'April', 
-                'May', 
-                'June']]
+    # reader 
+    read_constants : Dict[str, str] = config.parse_section('reader')
+    BASE : str = read_constants['base']
+    NAME : str = BASE[BASE.find('.') + 1:]
+
+    # requestLimiter
+    rl_constants : Dict[str, str] = config.parse_section('requestLimiter')
+    load_loc = rl_constants['load_location']
+    LOAD_FILE : str = f'{load_loc}{NAME}.p'
+    INTERVAL : int = int(rl_constants['interval'])
+    LIMIT : int = int(rl_constants['limit'])
     
-    main(year, bases)
+    # ======
+    # 2. Parse args
+    # ======
+    parser = argparse.ArgumentParser()
+    parser.add_argument("year", help = "Year of data to be added", nargs = '?')
+    parser.add_argument('--today', action = argparse.BooleanOptionalAction)
+
+    args = parser.parse_args()
+    
+    if args.year:
+        YEAR : int = int(args.year)
+    
+    TODAY : bool = False
+    if args.today:
+        TODAY = args.today
+        YEAR = datetime.date.today().year
+
+    rl : RequestLimiter = RequestLimiter(BASE, 
+                        interval = INTERVAL, 
+                        limit = LIMIT - 1, 
+                        load = LOAD_FILE)
+    br : BoxscoreReader = BoxscoreReader(rl)
+    dao : Dfs_dao = Dfs_dao(pgc)
+
+    schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
+    
+    MONTHS : List[str] = ['october-2019',
+                            'october', 
+                            'november', 
+                            'december', 
+                            'january',
+                            'february',
+                            'march',
+                            'april',
+                            'may',
+                            'june',
+                            'july',
+                            'august',
+                            'september',
+                            'october-2020']
+    
+    load_schedule(schedule_base, rl, br, TODAY)
+    
