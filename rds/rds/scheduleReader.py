@@ -93,6 +93,7 @@ class BoxscoreReader():
 
     
     def process_time(self, tim : str) -> str:
+            print(f"Here is the tim: {tim}")
             tim_list = tim.split(':')
             
             tim_list[1] = tim_list[1][:-1]

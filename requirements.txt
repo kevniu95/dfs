@@ -1,0 +1,7 @@
+beautifulsoup4==4.11.1
+numpy
+pandas
+html5lib
+psycopg2==2.9.5
+psycopg2_binary==2.9.5
+requests==2.28.1
