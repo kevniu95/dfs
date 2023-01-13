@@ -18,13 +18,15 @@ from bs4 import BeautifulSoup
 def load_schedule(schedule_base : str, 
                     rl : RequestLimiter,
                     br : BoxscoreReader,
+                    month : int,
                     today : bool):
     
     process_months : List[str] = MONTHS
     if today:
         process_months : List[str] = [datetime.date.today().strftime('%B').lower()]
 
-    for month in process_months:
+
+    for month in process_months[month:]:
         print('\n' + month)
         link : str = schedule_base.format(YEAR, month)
         df : pd.DataFrame = learn_schedule_from_month(link, rl)
@@ -94,6 +96,7 @@ if __name__ == '__main__':
     # ======
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", help = "Year of data to be added", nargs = '?')
+    parser.add_argument("--month", help = "Month to be processed", nargs = '?')
     parser.add_argument('--today', action = argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
@@ -101,6 +104,10 @@ if __name__ == '__main__':
     if args.year:
         YEAR : int = int(args.year)
     
+    MONTH = 0
+    if args.month:
+        MONTH : int = int(args.month)
+
     TODAY : bool = False
     if args.today:
         TODAY = args.today
@@ -130,4 +137,4 @@ if __name__ == '__main__':
                             'september',
                             'october-2020']
     
-    load_schedule(schedule_base, rl, br, TODAY)
+    load_schedule(schedule_base, rl, br, MONTH, TODAY)
