@@ -47,6 +47,7 @@ def load_schedule(schedule_base : str,
             tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
             
             game_info = (row['Date'], br.process_time(row['Start (ET)']), treat_attend(row['Attend.']), row['Arena']) 
+            
             game_entry_tuple1 = game_info + tm1_tuple + tm2_tuple
             game_entry_tuple2 = game_info + tm2_tuple + tm1_tuple
 
@@ -55,7 +56,6 @@ def load_schedule(schedule_base : str,
 
             tm1_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm1_players, tm1, tm2)
             tm2_players : List[Tuple[Any, ...]] = br.update_player_tups(game_info[:2], tm2_players, tm2, tm1)
-            
             dao.team_box_to_db([game_entry_tuple1, game_entry_tuple2])
             dao.player_box_to_db(tm1_players)
             dao.player_box_to_db(tm2_players)

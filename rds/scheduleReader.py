@@ -34,8 +34,9 @@ def learn_schedule_from_month(link : str, rl : RequestLimiter) -> pd.DataFrame:
     if table is None:
         print("No table found so moving to another month...")
         return 
+    table = table[table['Start (ET)'].str[-1:] == 'p'].reset_index().drop('index',axis=1).copy()
     table['game_link'] = pd.Series(link_col, dtype = 'object')
-    table = table[table['game_link'].notnull()]
+    table = table[table['game_link'].notnull()].copy()
     return table
     
 
