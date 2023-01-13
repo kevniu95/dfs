@@ -33,14 +33,8 @@ def load_schedule(schedule_base : str,
             continue
         
         if today:
-<<<<<<< HEAD:load_schedule.py
             df = df.iloc[-15:,].copy()
         
-=======
-            df['today'] = pd.to_datetime(df['Date']).dt.date
-            df = df[df['tday'] == datetime.date.today()].copy()            
-
->>>>>>> 65635b300a32b7d09d14dc0c83d6f07e56270598:rds/load_schedule.py
         ctr = 0
         for _, row in df.iterrows():
             link : str = BASE + row['game_link']
@@ -99,11 +93,7 @@ if __name__ == '__main__':
     # 2. Parse args
     # ======
     parser = argparse.ArgumentParser()
-<<<<<<< HEAD:load_schedule.py
     parser.add_argument("--year", help = "Year of data to be added", nargs = '?')
-=======
-    parser.add_argument("year", help = "Year of data to be added", nargs = '?')
->>>>>>> 65635b300a32b7d09d14dc0c83d6f07e56270598:rds/load_schedule.py
     parser.add_argument('--today', action = argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
