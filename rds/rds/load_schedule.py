@@ -18,14 +18,13 @@ from bs4 import BeautifulSoup
 def load_schedule(schedule_base : str, 
                     rl : RequestLimiter,
                     br : BoxscoreReader,
-                    monthNum: int,
                     today : bool):
     
     process_months : List[str] = MONTHS
     if today:
         process_months : List[str] = [datetime.date.today().strftime('%B').lower()]
 
-    for month in process_months[monthNum:]:
+    for month in process_months:
         print('\n' + month)
         link : str = schedule_base.format(YEAR, month)
         df : pd.DataFrame = learn_schedule_from_month(link, rl)
@@ -40,8 +39,7 @@ def load_schedule(schedule_base : str,
         for _, row in df.iterrows():
             link : str = BASE + row['game_link']
             print(link)
-    
-            br.set_link(link)        
+            br.set_link(link)
 
             soup : BeautifulSoup  = br.get_soup()
             tm1_tuple, tm1_players, tm2_tuple,tm2_players = br.get_all_info(soup)
@@ -96,17 +94,12 @@ if __name__ == '__main__':
     # ======
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", help = "Year of data to be added", nargs = '?')
-    parser.add_argument("--month", help = "Number of month onward to process", nargs = '?')
     parser.add_argument('--today', action = argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
     
     if args.year:
         YEAR : int = int(args.year)
-
-    MONTH = 0
-    if args.month:
-        MONTH : int = int(args.month)
     
     TODAY : bool = False
     if args.today:
@@ -137,5 +130,4 @@ if __name__ == '__main__':
                             'september',
                             'october-2020']
     
-    load_schedule(schedule_base, rl, br, MONTH, TODAY)
-    
+    load_schedule(schedule_base, rl, br, TODAY)
