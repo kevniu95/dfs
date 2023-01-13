@@ -7,12 +7,6 @@ from requests.models import Response
 import pickle
 import threading
 
-# class BatchRequestLimiter(RequestLimiter):
-#     """
-#     A request limiter that can handle a batch of requests larger than its limit
-#     """
-#     def __init__(self):
-
 
 class LogEntry():
     """

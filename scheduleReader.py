@@ -8,6 +8,7 @@ import numpy as np
 from requestLimiter import RequestLimiter
 
 def learn_schedule_from_month(link : str, rl : RequestLimiter) -> pd.DataFrame:
+    print(link)
     try:
         data = rl.get(link, waitForPop = True)
     except:
@@ -17,7 +18,6 @@ def learn_schedule_from_month(link : str, rl : RequestLimiter) -> pd.DataFrame:
         if not data or not data.ok:
             print("Couldn't get information in learn_schedule_from_month() function!")
             return 
-    
     data = data.text
     soup : BeautifulSoup = BeautifulSoup(data, 'html.parser')
     
@@ -31,6 +31,9 @@ def learn_schedule_from_month(link : str, rl : RequestLimiter) -> pd.DataFrame:
                     link_col.append(a.get('href'))
         
     table : pd.DataFrame = read_ith_table(soup, 0, id='schedule')
+    if table is None:
+        print("No table found so moving to another month...")
+        return 
     table['game_link'] = pd.Series(link_col, dtype = 'object')
     table = table[table['game_link'].notnull()]
     return table
