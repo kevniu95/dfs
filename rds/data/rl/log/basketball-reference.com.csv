@@ -7059,6 +7059,7 @@ https://www.basketball-reference.com/boxscores/201901160BOS.html,https://www.bas
 https://www.basketball-reference.com/boxscores/201901160HOU.html,https://www.basketball-reference.com,1673570752.761037,<Response [200]>
 https://www.basketball-reference.com/boxscores/201901160MEM.html,https://www.basketball-reference.com,1673570753.344076,<Response [200]>
 https://www.basketball-reference.com/boxscores/201901160DAL.html,https://www.basketball-reference.com,1673570754.182017,<Response [200]>
+<<<<<<< HEAD:data/rl/log/basketball-reference.com.csv
 https://www.basketball-reference.com/leagues/NBA_2019_games-october-2019.html,https://www.basketball-reference.com,1673574836.0936599,<Response [404]>
 https://www.basketball-reference.com/leagues/NBA_2019_games-october.html,https://www.basketball-reference.com,1673574836.1681678,<Response [200]>
 https://www.basketball-reference.com/boxscores/201810160BOS.html,https://www.basketball-reference.com,1673574836.4837089,<Response [200]>
@@ -7096,3 +7097,5 @@ https://www.basketball-reference.com/boxscores/202301110NYK.html,https://www.bas
 https://www.basketball-reference.com/boxscores/202301110MEM.html,https://www.basketball-reference.com,1673575254.407403,<Response [200]>
 https://www.basketball-reference.com/boxscores/202301110DEN.html,https://www.basketball-reference.com,1673575254.9484968,<Response [200]>
 https://www.basketball-reference.com/boxscores/202301110SAC.html,https://www.basketball-reference.com,1673575255.513765,<Response [200]>
+=======
+>>>>>>> 65635b300a32b7d09d14dc0c83d6f07e56270598:rds/data/rl/log/basketball-reference.com.csv
