@@ -74,7 +74,7 @@ class BoxscoreReader():
 
         # A. Get teams
         tm1, tm2 = self._get_team_names(soup)
-
+        
         tabs = len(soup.find_all('div', class_ = 'filter switcher')[0].find_all('div'))
         tm1_inds = [0, tabs] 
         tm2_inds = [tabs + 1, (tabs + 1) * 2 - 1]
@@ -94,7 +94,6 @@ class BoxscoreReader():
 
     
     def process_time(self, tim : str) -> str:
-            print(f"Here is the tim: {tim}")
             tim_list = tim.split(':')
             
             tim_list[1] = tim_list[1][:-1]
