@@ -18,15 +18,15 @@ from bs4 import BeautifulSoup
 def load_schedule(schedule_base : str, 
                     rl : RequestLimiter,
                     br : BoxscoreReader,
-                    month : int,
+                    month_start : int,
+                    month_end : int,
                     today : bool):
     
     process_months : List[str] = MONTHS
     if today:
         process_months : List[str] = [datetime.date.today().strftime('%B').lower()]
 
-
-    for month in process_months[month:]:
+    for month in process_months[month_start : month_end]:
         print('\n' + month)
         link : str = schedule_base.format(YEAR, month)
         df : pd.DataFrame = learn_schedule_from_month(link, rl)
@@ -96,17 +96,38 @@ if __name__ == '__main__':
     # ======
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", help = "Year of data to be added", nargs = '?')
-    parser.add_argument("--month", help = "Month to be processed", nargs = '?')
+    parser.add_argument("--month_start", help = "Month start to be processed", nargs = '?')
+    parser.add_argument("--month_end", help = "Month end to be processed", nargs = '?')
     parser.add_argument('--today', action = argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
     
+
+    MONTHS : List[str] = ['october-2019',
+                            'october', 
+                            'november', 
+                            'december', 
+                            'january',
+                            'february',
+                            'march',
+                            'april',
+                            'may',
+                            'june',
+                            'july',
+                            'august',
+                            'september',
+                            'october-2020']
+
     if args.year:
         YEAR : int = int(args.year)
     
-    MONTH = 0
-    if args.month:
-        MONTH : int = int(args.month)
+    month_start : int = 0
+    if args.month_start:
+        month_start : int = int(args.month_start)
+
+    month_end : int = len(MONTHS)
+    if args.month_end:
+        month_end : int = int(args.month_end)
 
     TODAY : bool = False
     if args.today:
@@ -122,19 +143,4 @@ if __name__ == '__main__':
 
     schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
     
-    MONTHS : List[str] = ['october-2019',
-                            'october', 
-                            'november', 
-                            'december', 
-                            'january',
-                            'february',
-                            'march',
-                            'april',
-                            'may',
-                            'june',
-                            'july',
-                            'august',
-                            'september',
-                            'october-2020']
-    
-    load_schedule(schedule_base, rl, br, MONTH, TODAY)
+    load_schedule(schedule_base, rl, br, month_start, month_end, TODAY)

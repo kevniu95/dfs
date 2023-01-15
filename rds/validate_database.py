@@ -12,8 +12,8 @@ from requestLimiter import RequestLimiter
 from standingsReader import StandingsReader
 from dfs_dao import Dfs_dao
 
-season = {2023 : {'dates' : ['10-01-2022', '01-13-2023'],
-                    'games' : None},
+season_info = { #2023 : {'dates' : ['10-01-2022', '01-13-2023'],
+                    #'games' : None},
             2022 : {'dates' : ['10-01-2021', '07-01-2022'],
                     'games' : 82},
             2021 : {'dates' : ['12-01-2020', '08-01-2021'],
@@ -60,23 +60,21 @@ teams = ['Charlotte Hornets',
         'Orlando Magic']
 
 
-"https://www.basketball-reference.com/leagues/NBA_2019_standings.html"
-
-def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader):
+def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, dao : Dfs_dao):
     for season, months in list(years.items())[:1]:
         std_base : str = BASE + f'/leagues/NBA_{season}_standings.html'
         sr.set_link(std_base)
         soup : BeautifulSoup = sr.get_soup()
 
-        real_games : Dict[str, int] = sr.get_real_tm_games(soup)
-        for tm, games in real_games.items():
-            print(tm, games)
+        # real_games : Dict[str, int] = sr.get_real_tm_games(soup)
+        
+        info = season_info[season]
+        db_games = dao.get_team_game_num(info['dates'][0], info['dates'][1])
+        print(db_games)
+        # for tm, games in real_games.items():
+            # print(tm, games)
             # Use DAO to query database given month range
 
-    
-
-
-        
 
 if __name__ == '__main__':
     # ======
@@ -119,4 +117,8 @@ if __name__ == '__main__':
 
     schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
     
-    validate_db_games(season, stRead)
+    validate_db_games(season_info, stRead, dao)
+    # game_nums = dao.get_team_game_num(date1 = '10-01-2021', date2 = '07-01-2022')
+    
+    # dao.validate_no_tm_date_dups(date1 = '10-01-2021', date2 = '07-01-2022')
+    # print(game_nums)

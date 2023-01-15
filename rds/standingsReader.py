@@ -37,8 +37,7 @@ class StandingsReader():
 
         for i in ['E', 'W']:
             tab = read_ith_table(soup, 0, id = f'confs_standings_{i}')
-            tab.iloc[:, 0] = tab.iloc[:, 0].str.replace(r"\(.*\)","", regex = True).str.strip()
+            tab.iloc[:, 0] = tab.iloc[:, 0].str.replace(r"\(.*\)","", regex = True).str.strip().str.replace('*','', regex = False)
             for _, row in tab.iterrows():
                 tm_games[row[0]] = row[1] + row[2]
         return tm_games
-        
