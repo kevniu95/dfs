@@ -44,11 +44,11 @@ def load_teams(bases : Dict[str, str],
         team_tup = [(YEAR, tm, stadium)]
         dao.team_to_db(team_tup)
         # 2. Create and load Player
-        player_tups = trr.process_rows_for_player(df)
-        dao.players_to_db(player_tups)
+        # player_tups = trr.process_rows_for_player(df)
+        # dao.players_to_db(player_tups)
         # 3. Create and load Roster
-        roster_tups = trr.process_rows_for_roster(df, tm)
-        dao.roster_to_db(roster_tups)
+        # roster_tups = trr.process_rows_for_roster(df, tm)
+        # dao.roster_to_db(roster_tups)
     return
 
 

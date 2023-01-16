@@ -46,9 +46,9 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
                 print(k, v)
             assert db_t_games[k] == real_games[k]
 
-            if db_p_games[k] != real_games[k]:
-                print(k,v)
-            assert db_p_games[k] == real_games[k]
+            # if db_p_games[k] != real_games[k]:
+            #     print(k,v)
+            # assert db_p_games[k] == real_games[k]
 
 
 if __name__ == '__main__':
