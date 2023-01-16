@@ -40,6 +40,55 @@ class Dfs_dao():
         res : List[Tuple[Any,...]] = self._try_select(sql, data, 'team_game_num_from_player')
         return dict(res)
 
+    def validate_same_box_games(self) -> List[Tuple[Any,...]]:
+        data=()
+        sql = """ SELECT a.*
+                    FROM player_box as a
+                    FULL JOIN
+                    (SELECT DISTINCT game_date, tm1, tm2
+                    FROM team_box) AS b
+                    ON a.game_date = b.game_date AND a.tm1 = b.tm1 AND a.tm2 = b.tm2
+                    WHERE b.game_date IS NULL;"""
+        res : List[Tuple[Any,...]] = self._try_select(sql, data, 'team_game_num_from_player')
+        return res
+
+    def validate_internal_box_score_consistency(self) -> bool:
+        data = ()
+        games = """SELECT DISTINCT game_date,tm1, tm2
+                    FROM team_box;"""
+
+        # 1. Games are consistent in score
+        print("-Checking that games internally consistent in score...")
+        gc = """SELECT * 
+                    FROM 
+                    (SELECT game_date, tm1, tm1 as tm1_, tm2, tm2 as tm2_, pts, pts as pts_, pts_a, pts_a as pts_a_
+                    FROM team_box) AS a
+                    JOIN 
+                    (SELECT game_date, tm1, tm1 as tm1_, tm2, tm2 as tm2_, pts, pts as pts_, pts_a, pts_a as pts_a_
+                    FROM team_box) AS b
+                    ON a.tm1 = b.tm2_ 
+                        AND a.tm2 = b.tm1_
+                        AND a.game_date = b.game_date
+                        AND a.pts = b.pts_a_
+                        AND a.pts_a = b.pts_;"""
+        
+        # 2. Game scores consistent with player totals
+        print("-Checking that games scores are consistent with player points...")
+        gc_w_p = """ SELECT a.game_date, a.tm1, a.tm2, a.player_pts, b.pts
+                        FROM (SELECT DISTINCT game_date, tm1, tm2, SUM(pts) as player_pts 
+                        FROM player_box
+                        GROUP BY game_date, tm1, tm2) AS a
+                        FULL JOIN team_box as b
+                        ON a.game_date = b.game_date
+                        AND a.tm1 = b.tm1
+                        AND a.tm2 = b.tm2
+                        AND a.player_pts = b.pts;"""
+        a = self._try_select(games, data, 'game scores')
+        b = self._try_select(gc, data, 'game_scores')
+        c = self._try_select(gc_w_p, data, 'game_scores')
+        assert len(a) == len(c) == len(b)
+        return True
+	
 
     def validate_no_tm_date_dups(self, date1 : str, date2 : str) -> None:
         data = (date1, date2)

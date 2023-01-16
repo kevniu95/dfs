@@ -28,6 +28,7 @@ season_info = { 2023 : {'dates' : ['10-01-2022', '01-15-2023'],
 
 
 def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, dao : Dfs_dao):
+    print("\nChecking number of games in database match games in standings...")
     for season, months in list(years.items()):
         print(season)
         std_base : str = BASE + f'/leagues/NBA_{season}_standings.html'
@@ -49,6 +50,15 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
             if db_p_games[k] != real_games[k]:
                 print(k,v)
             assert db_p_games[k] == real_games[k]
+    print("Done.")
+
+    print("\nChecking player and team box score observations are same...")
+    assert len(dao.validate_same_box_games()) == 0
+    print("Done.")
+
+    print("\nChecking that box scores are internally consistent in database...")
+    dao.validate_internal_box_score_consistency()
+    print("Done.")
 
 
 if __name__ == '__main__':
