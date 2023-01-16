@@ -28,7 +28,7 @@ season_info = { 2023 : {'dates' : ['10-01-2022', '01-15-2023'],
 
 
 def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, dao : Dfs_dao):
-    for season, months in list(years.items())[:3]:
+    for season, months in list(years.items()):
         print(season)
         std_base : str = BASE + f'/leagues/NBA_{season}_standings.html'
         sr.set_link(std_base)
@@ -46,9 +46,9 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
                 print(k, v)
             assert db_t_games[k] == real_games[k]
 
-            # if db_p_games[k] != real_games[k]:
-            #     print(k,v)
-            # assert db_p_games[k] == real_games[k]
+            if db_p_games[k] != real_games[k]:
+                print(k,v)
+            assert db_p_games[k] == real_games[k]
 
 
 if __name__ == '__main__':

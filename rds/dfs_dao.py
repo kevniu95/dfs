@@ -1,6 +1,8 @@
+import argparse
 from typing import List, Tuple, Any, Dict
 from psycopg2.extensions import connection, cursor
 
+from config import Config
 from pgConnect import PgConnection
 
 class Dfs_dao():
@@ -11,10 +13,10 @@ class Dfs_dao():
     
     
     def delete_entries_in_date_range(self, table : str, date1: str, date2 : str) -> None:
-        sql = """DELETE FROM %s 
-                    WHERE game_date >= %s and game_date <=%s;"""
-        data = (table, date1, date2)
-        self._try_commit(sql, data)
+        sql = """DELETE FROM """ + (table) + \
+                    """ WHERE game_date >= %s and game_date <=%s;"""
+        data = (date1, date2)
+        self._try_commit(sql, data, 'delete')
         
 
     def get_team_game_num(self, date1 : str, date2 : str) -> Dict[str, int]:
@@ -148,4 +150,26 @@ class Dfs_dao():
             print(str(e))
             print(f"Query was... {qry}")        
       
+
+if __name__ == '__main__':
+    # ======
+    # 1. Read configs
+    # ======
+    config : Config = Config()
+    pgc : PgConnection = PgConnection(config)
+    dao : Dfs_dao = Dfs_dao(pgc)
+
+    # ======
+    # 2. Parse arguments
+    # ======
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--delete', action = argparse.BooleanOptionalAction)
+    parser.add_argument("--table", help = "Table to be processed", nargs = '?')
+    parser.add_argument("--date1", help = "Start date to be processed", nargs = '?')
+    parser.add_argument("--date2", help = "End date to be processed", nargs = '?')
+
+    args = parser.parse_args()
+
+    if args.delete:
+        dao.delete_entries_in_date_range(args.table, args.date1, args.date2)
     
