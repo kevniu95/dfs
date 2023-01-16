@@ -11,14 +11,21 @@ class Dfs_dao():
         self.conn : connection = pgc.getConn()
         self.cur : cursor = pgc.getCurs()
     
-    
+    """
+    A. Utility functions
+    """
     def delete_entries_in_date_range(self, table : str, date1: str, date2 : str) -> None:
         sql = """DELETE FROM """ + (table) + \
                     """ WHERE game_date >= %s and game_date <=%s;"""
         data = (date1, date2)
         self._try_commit(sql, data, 'delete')
         
-
+    """
+    B. Validation functions
+    """
+    # ======
+    # 1. Game Numbers
+    # ======
     def get_team_game_num(self, date1 : str, date2 : str) -> Dict[str, int]:
         data = (date1, date2)
         sql = """ SELECT tm1, COUNT(*)
@@ -40,7 +47,10 @@ class Dfs_dao():
         res : List[Tuple[Any,...]] = self._try_select(sql, data, 'team_game_num_from_player')
         return dict(res)
 
-    def validate_same_box_games(self) -> List[Tuple[Any,...]]:
+    # =======
+    # 2. Validation checks
+    # =======
+    def validate_same_box_games(self) -> bool:
         data=()
         sql = """ SELECT a.*
                     FROM player_box as a
@@ -50,7 +60,8 @@ class Dfs_dao():
                     ON a.game_date = b.game_date AND a.tm1 = b.tm1 AND a.tm2 = b.tm2
                     WHERE b.game_date IS NULL;"""
         res : List[Tuple[Any,...]] = self._try_select(sql, data, 'team_game_num_from_player')
-        return res
+        assert len(res) == 0
+        return True
 
     def validate_internal_box_score_consistency(self) -> bool:
         data = ()
@@ -90,7 +101,7 @@ class Dfs_dao():
         return True
 	
 
-    def validate_no_tm_date_dups(self, date1 : str, date2 : str) -> None:
+    def validate_no_tm_date_dups(self, date1 : str, date2 : str) -> bool:
         data = (date1, date2)
         sql = """SELECT tm1, game_date, COUNT(*) as total_rows
                     FROM team_box
@@ -100,8 +111,12 @@ class Dfs_dao():
                     ORDER BY total_rows DESC;"""
         res : List[Tuple[Any, ...]]= self._try_select(sql, data, 'no team date dups')
         assert len(res) == 0
+        return True
         
 
+    """
+    C. Upload to DB
+    """
     def team_box_to_db(self, tups : List[Tuple[Any, ...]]) -> None:
         args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\
                                             "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\
@@ -166,7 +181,9 @@ class Dfs_dao():
                 "ON CONFLICT (season, team) DO NOTHING"
         self._try_insertion(qry, 'team')
 
-
+    """
+    D. Helpers
+    """
     def _try_commit(self, sql : str, data : Tuple[str,...], commit_type : str) -> None:
         try:
             self.cur.execute(sql, data)

@@ -53,7 +53,7 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
     print("Done.")
 
     print("\nChecking player and team box score observations are same...")
-    assert len(dao.validate_same_box_games()) == 0
+    dao.validate_same_box_games()
     print("Done.")
 
     print("\nChecking that box scores are internally consistent in database...")
@@ -103,36 +103,3 @@ if __name__ == '__main__':
     schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
     
     validate_db_games(season_info, stRead, dao)
-    
-
-
-teams = ['Charlotte Hornets',
-        'Philadelphia 76ers',
-        'Washington Wizards',
-        'Chicago Bulls',
-        'Cleveland Cavaliers',
-        'Sacramento Kings',
-        'New Orleans Pelicans',
-        'Milwaukee Bucks',
-        'Miami Heat',
-        'Brooklyn Nets',
-        'Indiana Pacers',
-        'Golden State Warriors',
-        'Toronto Raptors',
-        'Atlanta Hawks',
-        'Oklahoma City Thunder',
-        'Los Angeles Lakers',
-        'Boston Celtics',
-        'Houston Rockets',
-        'Dallas Mavericks',
-        'New York Knicks',
-        'Memphis Grizzlies',
-        'Utah Jazz',
-        'Denver Nuggets',
-        'San Antonio Spurs',
-        'Minnesota Timberwolves',
-        'Portland Trail Blazers',
-        'Detroit Pistons',
-        'Los Angeles Clippers',
-        'Phoenix Suns',
-        'Orlando Magic']
