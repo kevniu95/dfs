@@ -19,6 +19,7 @@ class Dfs_dao():
         res : List[Tuple[Any,...]] = self._try_select(qry, 'team_game_num')
         return dict(res)
 
+
     def validate_no_tm_date_dups(self, date1 : str, date2 : str) -> None:
         qry = """SELECT tm1, game_date, COUNT(*) as total_rows
                     FROM team_box
@@ -30,6 +31,7 @@ class Dfs_dao():
         
         res : List[Tuple[Any, ...]]= self._try_select(qry, 'no team date dups')
         assert len(res) == 0
+        
         
     def team_box_to_db(self, tups : List[Tuple[Any, ...]]) -> None:
         args = ','.join(self.cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"\

@@ -12,68 +12,38 @@ from requestLimiter import RequestLimiter
 from standingsReader import StandingsReader
 from dfs_dao import Dfs_dao
 
-season_info = { #2023 : {'dates' : ['10-01-2022', '01-13-2023'],
-                    #'games' : None},
-            2022 : {'dates' : ['10-01-2021', '07-01-2022'],
+season_info = { 2023 : {'dates' : ['10-01-2022', '01-15-2023'],
+                    'games' : None},
+            2022 : {'dates' : ['10-01-2021', '04-11-2022'],
                     'games' : 82},
-            2021 : {'dates' : ['12-01-2020', '08-01-2021'],
+            2021 : {'dates' : ['12-01-2020', '05-17-2021'],
                     'games' : 72},
-            2020 : {'dates' : ['10-01-2019', '10-31-2020'],
+            2020 : {'dates' : ['10-01-2019', '8-14-2020'],
                     'games' : 72},
-            2019 : {'dates' : ['10-01-2018', '07-01-2019'],
+            2019 : {'dates' : ['10-01-2018', '04-12-2019'],
                     'games' : 82},
-            2018 : {'dates' : ['10-01-2017', '07-01-2018'],
+            2018 : {'dates' : ['10-01-2017', '04-13-2018'],
                     'games' : 82}
         }
 
 
-
-teams = ['Charlotte Hornets',
-        'Philadelphia 76ers',
-        'Washington Wizards',
-        'Chicago Bulls',
-        'Cleveland Cavaliers',
-        'Sacramento Kings',
-        'New Orleans Pelicans',
-        'Milwaukee Bucks',
-        'Miami Heat',
-        'Brooklyn Nets',
-        'Indiana Pacers',
-        'Golden State Warriors',
-        'Toronto Raptors',
-        'Atlanta Hawks',
-        'Oklahoma City Thunder',
-        'Los Angeles Lakers',
-        'Boston Celtics',
-        'Houston Rockets',
-        'Dallas Mavericks',
-        'New York Knicks',
-        'Memphis Grizzlies',
-        'Utah Jazz',
-        'Denver Nuggets',
-        'San Antonio Spurs',
-        'Minnesota Timberwolves',
-        'Portland Trail Blazers',
-        'Detroit Pistons',
-        'Los Angeles Clippers',
-        'Phoenix Suns',
-        'Orlando Magic']
-
-
 def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, dao : Dfs_dao):
-    for season, months in list(years.items())[:1]:
+    for season, months in list(years.items())[:3]:
+        print(season)
         std_base : str = BASE + f'/leagues/NBA_{season}_standings.html'
         sr.set_link(std_base)
         soup : BeautifulSoup = sr.get_soup()
 
-        # real_games : Dict[str, int] = sr.get_real_tm_games(soup)
-        
+        # Get game number from team summary
+        real_games : Dict[str, int] = sr.get_real_tm_games(soup)
+        # Get game number from DB
         info = season_info[season]
         db_games = dao.get_team_game_num(info['dates'][0], info['dates'][1])
-        print(db_games)
-        # for tm, games in real_games.items():
-            # print(tm, games)
-            # Use DAO to query database given month range
+
+        for k, v in db_games.items():
+            if db_games[k] != real_games[k]:
+                print(k, v)
+            assert db_games[k] == real_games[k]
 
 
 if __name__ == '__main__':
@@ -118,7 +88,36 @@ if __name__ == '__main__':
     schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
     
     validate_db_games(season_info, stRead, dao)
-    # game_nums = dao.get_team_game_num(date1 = '10-01-2021', date2 = '07-01-2022')
     
-    # dao.validate_no_tm_date_dups(date1 = '10-01-2021', date2 = '07-01-2022')
-    # print(game_nums)
+
+
+teams = ['Charlotte Hornets',
+        'Philadelphia 76ers',
+        'Washington Wizards',
+        'Chicago Bulls',
+        'Cleveland Cavaliers',
+        'Sacramento Kings',
+        'New Orleans Pelicans',
+        'Milwaukee Bucks',
+        'Miami Heat',
+        'Brooklyn Nets',
+        'Indiana Pacers',
+        'Golden State Warriors',
+        'Toronto Raptors',
+        'Atlanta Hawks',
+        'Oklahoma City Thunder',
+        'Los Angeles Lakers',
+        'Boston Celtics',
+        'Houston Rockets',
+        'Dallas Mavericks',
+        'New York Knicks',
+        'Memphis Grizzlies',
+        'Utah Jazz',
+        'Denver Nuggets',
+        'San Antonio Spurs',
+        'Minnesota Timberwolves',
+        'Portland Trail Blazers',
+        'Detroit Pistons',
+        'Los Angeles Clippers',
+        'Phoenix Suns',
+        'Orlando Magic']
