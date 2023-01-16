@@ -1,10 +1,6 @@
 import argparse
-import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 from bs4 import BeautifulSoup
-from bs4utils import get_ith_table, read_ith_table
-import pandas as pd
-
 
 from config import Config
 from pgConnect import PgConnection
@@ -12,18 +8,12 @@ from requestLimiter import RequestLimiter
 from standingsReader import StandingsReader
 from dfs_dao import Dfs_dao
 
-season_info = { 2023 : {'dates' : ['10-01-2022', '01-15-2023'],
-                    'games' : None},
-            2022 : {'dates' : ['10-01-2021', '04-11-2022'],
-                    'games' : 82},
-            2021 : {'dates' : ['12-01-2020', '05-17-2021'],
-                    'games' : 72},
-            2020 : {'dates' : ['10-01-2019', '8-14-2020'],
-                    'games' : 72},
-            2019 : {'dates' : ['10-01-2018', '04-12-2019'],
-                    'games' : 82},
-            2018 : {'dates' : ['10-01-2017', '04-13-2018'],
-                    'games' : 82}
+season_info = { 2023 : {'dates' : ['10-01-2022', '01-15-2023']},
+            2022 : {'dates' : ['10-01-2021', '04-11-2022']},
+            2021 : {'dates' : ['12-01-2020', '05-17-2021']},
+            2020 : {'dates' : ['10-01-2019', '8-14-2020']},
+            2019 : {'dates' : ['10-01-2018', '04-12-2019']},
+            2018 : {'dates' : ['10-01-2017', '04-13-2018']},
         }
 
 
@@ -38,9 +28,9 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
         # Get game number from team summary
         real_games : Dict[str, int] = sr.get_real_tm_games(soup)
         # Get game number from DB
-        info = season_info[season]
-        db_t_games = dao.get_team_game_num(info['dates'][0], info['dates'][1])
-        db_p_games = dao.get_team_game_num_fp(info['dates'][0], info['dates'][1])
+        dates = season_info[season]['dates']
+        db_t_games : Dict[str, int] = dao.get_team_game_num(dates[0], dates[1])
+        db_p_games : Dict[str, int] = dao.get_team_game_num_fp(dates[0], dates[1])
 
         for k, v in real_games.items():
             if db_t_games[k] != real_games[k]:
