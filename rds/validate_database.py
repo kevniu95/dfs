@@ -38,12 +38,17 @@ def validate_db_games(years : Dict[str, Dict[str, Any]], sr : StandingsReader, d
         real_games : Dict[str, int] = sr.get_real_tm_games(soup)
         # Get game number from DB
         info = season_info[season]
-        db_games = dao.get_team_game_num(info['dates'][0], info['dates'][1])
+        db_t_games = dao.get_team_game_num(info['dates'][0], info['dates'][1])
+        db_p_games = dao.get_team_game_num_fp(info['dates'][0], info['dates'][1])
 
-        for k, v in db_games.items():
-            if db_games[k] != real_games[k]:
+        for k, v in real_games.items():
+            if db_t_games[k] != real_games[k]:
                 print(k, v)
-            assert db_games[k] == real_games[k]
+            assert db_t_games[k] == real_games[k]
+
+            if db_p_games[k] != real_games[k]:
+                print(k,v)
+            assert db_p_games[k] == real_games[k]
 
 
 if __name__ == '__main__':
