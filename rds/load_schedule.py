@@ -35,7 +35,7 @@ def load_schedule(schedule_base : str,
             continue
         
         if today:
-            df = df.iloc[-15:,].copy()
+            df = df.iloc[-17:,].copy()
         
         ctr = 0
         for _, row in df.iterrows():
@@ -60,12 +60,8 @@ def load_schedule(schedule_base : str,
             dao.player_box_to_db(tm1_players)
             dao.player_box_to_db(tm2_players)
             print()
-
-            # ctr += 1
-            # if ctr > 0:
-            #     break
             
-def treat_attend(attd : int):
+def treat_attend(attd : int) -> str:
     attd = re.sub(r"\.0$","", str(attd))
     if len(attd) == 0 or attd == 'nan':
         return '0'

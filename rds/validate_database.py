@@ -87,9 +87,6 @@ if __name__ == '__main__':
                         limit = LIMIT - 1, 
                         load = LOAD_FILE)
     stRead : StandingsReader = StandingsReader(rl)
-    
     dao : Dfs_dao = Dfs_dao(pgc)
 
-    schedule_base = BASE + '/leagues/NBA_{}_games-{}.html'
-    
     validate_db_games(season_info, stRead, dao)
