@@ -1,7 +1,6 @@
 import csv
-import urllib
 import datetime
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Dict
 import pandas as pd
 import numpy as np
 from tabula.io import read_pdf, convert_into
@@ -12,7 +11,7 @@ from dfs_dao import Dfs_dao
 
 
 def process_times_of_day(game_time_1 : datetime.time, game_time_2 : datetime.time) -> List[str]:
-    hr1 = game_time_1.hour - 1
+    hr1 = game_time_1.hour - 2
     hr2 = game_time_2.hour - 1
     
     retHours = []
@@ -33,29 +32,35 @@ def extract_date_from_link(link : str) -> datetime.date:
     dt : datetime.date = datetime.date(*tuple(dp_list))
     return dt
 
-def get_injury_report_links(date_tuples : List[Tuple[Any,... ]]) -> List[Tuple[str, datetime.time]]:
-    collection_hours = []
-    time_stamps = []
+def get_injury_report_links(date_tuples : List[Tuple[datetime.date, 
+                                                        datetime.time, 
+                                                        datetime.time ]]) -> Dict[str, List[Tuple[str, datetime.time]]]:
+    
+    return_dict : Dict[datetime.date, List[Tuple[str, datetime.time]]] = {}
     for date_tuple in date_tuples:
+        hourly_report_info : List[Tuple[str, datetime.time]] = []
+        
         yr, mth, day = (str(date_tuple[0].year), 
                         str(date_tuple[0].month).zfill(2), 
                         str(date_tuple[0].day).zfill(2))
         
-        day_base = '-'.join([yr, mth, day])
-        hours = process_times_of_day(date_tuple[1], date_tuple[2])
+        hours : List[str] = process_times_of_day(date_tuple[1], date_tuple[2])
         for hour in hours:
-            collection_hours.append(injury_base + '_' + day_base + '_' + hour[0] + '.pdf')
-            time_stamps.append(datetime.time(hour[1],30))
-    return list(zip(collection_hours, time_stamps))
+            link : str = injury_base + '_' + '-'.join([yr, mth, day]) + '_' + hour[0] + '.pdf'
+            time_stamp : datetime.time = datetime.time(hour[1],30)
+            hourly_report_info.append((link, time_stamp))
+        return_dict[date_tuple[0]] = hourly_report_info
+    return return_dict
 
-def collect_injury_report_csv(link : str, report_time : datetime.time):
+def collect_injury_report_csv(link : str, report_time : datetime.time) -> pd.DataFrame:
     dt : datetime.date = extract_date_from_link(link)
 
-    response = urllib.request.urlopen(link)
-    a = response.read()
-    convert_into(link, 'test.csv', pages = 'all')
+    try:
+        convert_into(link, './data/csv_templates/read.csv', pages = 'all')
+    except:
+        return
 
-    with open('test.csv') as f:
+    with open('./data/csv_templates/read.csv') as f:
         csv_rows = []
         r = csv.reader(f)
         for num, row in enumerate(r):
@@ -84,6 +89,7 @@ def collect_injury_report_csv(link : str, report_time : datetime.time):
             'Reason']
     return df[cols]
 
+
 if __name__ == '__main__':
     config : Config = Config()
     pgc : PgConnection = PgConnection(config)
@@ -91,12 +97,22 @@ if __name__ == '__main__':
 
     injury_base = 'https://ak-static.cms.nba.com/referee/injury/Injury-Report'
 
-    date_tuples : List[Tuple[str, datetime.time]]= dao.select_game_date_times()
-
+    date_tuples : List[Tuple[datetime.date, datetime.time, datetime.time]] = dao.select_game_date_times()
+    
     injury_links = get_injury_report_links(date_tuples)
     
-    test_link : Tuple[str, datetime.time] = injury_links[0]
-
-    a = collect_injury_report_csv(test_link[0], test_link[1])
-
-    print(a.head())
+    test = {k: v for k, v in injury_links.items() if k.month == 10 and k.year == 2022}
+    for date, injury_tuple_list in test.items():
+        print(date)
+        for injury_tuple in injury_tuple_list:
+            link, time = injury_tuple
+            df = collect_injury_report_csv(link, time)
+            if df:
+                df.to_csv('./data/csv_templates/write.csv', mode='a', header= False)
+            
+    # test_link : Tuple[str, datetime.time] = injury_links[datetime.date(2022, 12, 25)][0]
+    
+    # df = collect_injury_report_csv(test_link[0], test_link[1])
+    # df.to_csv('./data/csv_templates/write.csv')
+    
+    # print(a.head())

@@ -1,5 +1,6 @@
 import argparse
 from typing import List, Tuple, Any, Dict
+import datetime
 from psycopg2.extensions import connection, cursor
 
 from config import Config
@@ -23,7 +24,7 @@ class Dfs_dao():
     """
     Queries
     """
-    def select_game_date_times(self) -> List[Tuple[Any, Any, Any]]:
+    def select_game_date_times(self) -> List[Tuple[datetime.date, datetime.time, datetime.time]]:
         sql = """SELECT DISTINCT game_date, MIN(game_time), MAX(game_time)
                 FROM team_box
                 GROUP BY game_date
