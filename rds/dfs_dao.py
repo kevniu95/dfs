@@ -21,6 +21,17 @@ class Dfs_dao():
         self._try_commit(sql, data, 'delete')
         
     """
+    Queries
+    """
+    def select_game_date_times(self) -> List[Tuple[Any, Any, Any]]:
+        sql = """SELECT DISTINCT game_date, MIN(game_time), MAX(game_time)
+                FROM team_box
+                GROUP BY game_date
+                ORDER BY game_date DESC;"""
+        res = self._try_select(sql, (), 'select_times')
+        return res
+
+    """
     B. Validation functions
     """
     # ======
@@ -207,6 +218,9 @@ class Dfs_dao():
 
 
     def _try_insertion(self, qry : str, insertion_type : str) -> None:
+        print("Trying insertion now...")
+        print("Here is the cursor")
+        print(self.cur)
         try:
             self.cur.execute(qry)
             self.conn.commit()
@@ -238,4 +252,6 @@ if __name__ == '__main__':
 
     if args.delete:
         dao.delete_entries_in_date_range(args.table, args.date1, args.date2)
+    
+    dao.select_game_date_times()
     

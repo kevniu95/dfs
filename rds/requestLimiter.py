@@ -63,6 +63,7 @@ class RequestLimiter():
         print("Saving RequestLimiter status to disk...")
         with open(path + name + '.p', 'wb') as handle:
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            print("saved")
 
     def save(func):
         print("In save function...")
