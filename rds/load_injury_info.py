@@ -109,16 +109,16 @@ def process_month_year(month : int, year : int, injury_links : Dict[datetime.dat
     return file_name
     
 def save_csv_to_s3(file_name : str, bucket : str, object_name = None):
-        if object_name is None:
-            object_name = os.path.basename(file_name)
-        # Upload the file
-        s3_client = boto3.client('s3')
-        try:
-            response = s3_client.upload_file(file_name, bucket, 'player-injuries/' + object_name)
-        except ClientError as e:
-            print(e)
-            return False
-        return True
+    if object_name is None:
+        object_name = os.path.basename(file_name)
+    # Upload the file
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.upload_file(file_name, bucket, 'player-injuries/' + object_name)
+    except ClientError as e:
+        print(e)
+        return False
+    return True
 
 def get_month_years(injury_links : Dict[datetime.datetime, List[str]]) -> List[Tuple[int, int]]:
     month_years = zip([i.month for i in list(injury_links.keys())], [i.year for i in list(injury_links.keys())])
