@@ -24,13 +24,23 @@ class Dfs_dao():
     """
     Queries
     """
-    def select_game_date_times(self) -> List[Tuple[datetime.date, datetime.time, datetime.time]]:
+    def select_db_game_date_times(self) -> List[Tuple[datetime.date, datetime.time, datetime.time]]:
         sql = """SELECT DISTINCT game_date, MIN(game_time), MAX(game_time)
                 FROM team_box
                 GROUP BY game_date
                 ORDER BY game_date DESC;"""
         res = self._try_select(sql, (), 'select_times')
         return res
+    
+    def select_db_game_dates(self, year : int) -> List[datetime.date]:
+        data = (str(year) + '-01-01', str(year + 1) + '-01-01')
+        sql = """SELECT DISTINCT game_date
+                FROM team_box
+                WHERE game_date >= %s and game_date < %s
+                ORDER BY game_date DESC;"""
+        res = self._try_select(sql, data, 'select_dates')
+        return res
+        
 
     """
     B. Validation functions
